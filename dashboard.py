@@ -59,6 +59,42 @@ c3.metric("Alert Level", current["alert_level"])
 
 st.divider()
 
+st.subheader("🧠 System Intelligence & Advisory")
+
+# explanation text
+if current["alert_level"] == "CRITICAL 🔴":
+    st.error(
+        "⚠️ **Critical Water Stress Detected.**\n\n"
+        "Multiple reservoirs are showing highly negative net flow, "
+        "indicating excessive outflow and depletion. Immediate action is "
+        "recommended to stabilize water supply. Authorities should consider:\n"
+    )
+    st.markdown(
+        "- 🔹 Reducing metro and industrial drawal temporarily.\n"
+        "- 🔹 Activating secondary sources like Veeranam supply.\n"
+        "- 🔹 Issuing public water conservation advisories.\n"
+        "- 🔹 Preparing emergency distribution plans."
+    )
+
+elif current["alert_level"] == "MEDIUM PRIORITY 🟡":
+    st.warning(
+        "⚠️ **Moderate Water Stress Noted.**\n\n"
+        "Some reservoirs are compensating for deficits in others.\n"
+        "Careful monitoring and gradual demand management is advised.\n"
+    )
+    st.markdown(
+        "- ⚪ Monitor reservoir levels and adjust pumping schedules.\n"
+        "- ⚪ Encourage voluntary conservation campaigns.\n"
+        "- ⚪ Assess upcoming rainfall forecasts for replenishment."
+    )
+
+else:
+    st.success(
+        "✅ **Water System Stable.**\n\n"
+        "Reservoir inflow and outflow are balanced for the current period.\n"
+        "Continue routine monitoring to maintain stability."
+    )
+
 # ----------------------------------------
 # RESERVOIR STATUS
 # ----------------------------------------
@@ -189,3 +225,4 @@ st.plotly_chart(fig, use_container_width=True)
 st.caption(
     "Digital Twin Simulation | Smart City Chennai Water Intelligence"
 )
+
