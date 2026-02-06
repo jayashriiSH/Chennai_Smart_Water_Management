@@ -225,4 +225,3 @@ st.plotly_chart(fig, use_container_width=True)
 st.caption(
     "Digital Twin Simulation | Smart City Chennai Water Intelligence"
 )
-

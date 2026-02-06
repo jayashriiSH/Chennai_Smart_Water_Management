@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Region and Source Information</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script><!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+
+    .dashboard-bg {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #f8fafc 50%, #ecfeff 75%, #f0fdfa 100%);
+      min-height: 100%;
+    }
+
+    .wave-gradient {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 25%, #0369a1 50%, #075985 75%, #0c4a6e 100%);
+    }
+
+    .nav-link {
+      color: #4b5563;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-link:hover {
+      color: #0284c7;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #0ea5e9, #0284c7);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .nav-link.active {
+      color: #0284c7;
+      font-weight: 600;
+    }
+
+    .nav-link.active::after {
+      width: 100%;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 
+        0 10px 40px -10px rgba(14, 165, 233, 0.15),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(14, 165, 233, 0.1);
+      overflow: hidden;
+    }
+
+    .glass-card:hover {
+      box-shadow: 
+        0 25px 60px -15px rgba(14, 165, 233, 0.25),
+        0 10px 20px -5px rgba(0, 0, 0, 0.1);
+      transform: translateY(-8px);
+      border-color: rgba(14, 165, 233, 0.3);
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%);
+      padding: 20px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+
+    .card-header h3 {
+      color: white;
+      font-weight: 700;
+      font-size: 1.25rem;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .map-container {
+      height: 450px;
+      position: relative;
+      background: #f9fafb;
+      border-radius: 0 0 20px 20px;
+      overflow: hidden;
+    }
+
+    .map-container .leaflet-container {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .map-wrapper {
+      height: 100%;
+      border-radius: 0;
+      overflow: hidden;
+      border: none;
+      background: #f9fafb;
+      position: relative;
+    }
+
+    .map-placeholder {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      gap: 16px;
+    }
+
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+
+    .legend div {
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+
+    .legend div:last-child {
+      margin-bottom: 0;
+    }
+
+    .color-box {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 10px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    .fade-in-up-delay-1 {
+      animation-delay: 0.1s;
+      opacity: 0;
+    }
+
+    .fade-in-up-delay-2 {
+      animation-delay: 0.2s;
+      opacity: 0;
+    }
+
+    .fade-in-up-delay-3 {
+      animation-delay: 0.3s;
+      opacity: 0;
+    }
+
+    .water-pattern {
+      background-image: 
+        radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(34, 211, 238, 0.03) 0%, transparent 40%);
+    }
+
+    .page-title {
+      background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0ea5e9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full w-full">
+  <div class="min-h-full w-full dashboard-bg water-pattern"><!-- NAVBAR -->
+   <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+     <div class="flex items-center justify-between h-20"><!-- Logo -->
+      <div class="flex items-center gap-2">
+       <svg class="w-10 h-10" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#logoGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0369a1;stop-opacity:1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">AquaFlow</span>
+      </div><!-- Desktop Navigation -->
+      <div class="hidden lg:flex items-center gap-8"><a href="heropage.html" class="nav-link">Home</a> <a href="home.html" class="nav-link">About</a> <a href="water_monitor.html" class="nav-link">Water Monitoring</a> <a href="test2.html" class="nav-link">Leak Detection</a> <a href="groundwater.html" class="nav-link">Ground Water</a> <a href="waterscar.html" class="nav-link">Dashboard</a> <a href="#" class="nav-link active">Maps</a> <a href="#" class="nav-link">Contact</a>
+      </div><!-- Right Side -->
+      <div class="flex items-center gap-4"><button id="langBtn" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+        </svg><span id="langText" class="hidden md:inline font-medium">EN</span> </button> <button class="hidden md:block px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"> Login </button> <!-- Mobile Menu Button --> <button id="menuBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg></button>
+      </div>
+     </div>
+    </div><!-- Mobile Menu -->
+    <div id="mobileMenu" class="lg:hidden hidden bg-white border-t border-gray-100">
+     <div class="flex flex-col px-6 py-4 gap-4"><a href="heropage.html" class="nav-link">Home</a> <a href="home.html" class="nav-link">About</a> <a href="water_monitor.html" class="nav-link">Water Monitoring</a> <a href="test2.html" class="nav-link">Leak Detection</a> <a href="groundwater.html" class="nav-link">Ground Water</a> <a href="waterscar.html" class="nav-link">Dashboard</a> <a href="#" class="nav-link active">Maps</a> <a href="#" class="nav-link">Contact</a>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-6 lg:px-8 py-10"><!-- Page Header -->
+    <div class="text-center mb-12 fade-in-up">
+     <h1 id="page-title" class="text-4xl lg:text-5xl font-extrabold page-title mb-4">Region &amp; Source Information</h1>
+     <p class="text-gray-500 text-lg max-w-2xl mx-auto">Explore water resources, regional data, and environmental insights through interactive maps</p>
+    </div><!-- Cards Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><!-- Card 1 -->
+     <div class="glass-card fade-in-up fade-in-up-delay-1">
+      <div class="card-header">
+       <h3>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg><span id="card1-title">Water Sources</span></h3>
+      </div>
+      <div class="map-container" id="map1">
+       <div class="map-placeholder">
+        <svg class="w-16 h-16 text-cyan-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg><span class="text-sm font-medium">Map 1 - Add your code here</span>
+       </div>
+      </div>
+      <div class="p-5 bg-gradient-to-b from-white to-cyan-50/30">
+       <p class="text-gray-600 text-sm">View and analyze water source locations across different regions.</p>
+      </div>
+     </div><!-- Card 2 -->
+     <div class="glass-card fade-in-up fade-in-up-delay-2">
+      <div class="card-header">
+       <h3>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg><span id="card2-title">Regional Coverage</span></h3>
+      </div>
+      <div class="map-container" id="map2">
+       <div class="map-placeholder">
+        <svg class="w-16 h-16 text-cyan-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+        </svg><span class="text-sm font-medium">Map 2 - Add your code here</span>
+       </div>
+      </div>
+      <div class="p-5 bg-gradient-to-b from-white to-cyan-50/30">
+       <p class="text-gray-600 text-sm">Explore regional boundaries and coverage areas for water distribution.</p>
+      </div>
+     </div><!-- Card 3 -->
+     <div class="glass-card fade-in-up fade-in-up-delay-3">
+      <div class="card-header">
+       <h3>
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg><span id="card3-title">Analytics View</span></h3>
+      </div>
+      <div class="map-container" id="map3">
+       <div class="map-placeholder">
+        <svg class="w-16 h-16 text-cyan-300" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg><span class="text-sm font-medium">Map 3 - Add your code here</span>
+       </div>
+      </div>
+      <div class="p-5 bg-gradient-to-b from-white to-cyan-50/30">
+       <p class="text-gray-600 text-sm">Data visualization and analytics for water resource management.</p>
+      </div>
+     </div>
+    </div><!-- Instructions Panel -->
+    <div class="mt-12 glass-card p-8 fade-in-up" style="animation-delay: 0.4s; opacity: 0;">
+     <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+      <svg class="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg> How to Add Your Maps</h2>
+     <div class="grid md:grid-cols-3 gap-6 text-sm text-gray-600">
+      <div class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">1</span>
+       <p>Initialize Leaflet maps targeting <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map1</code>, <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map2</code>, or <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map3</code></p>
+      </div>
+      <div class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">2</span>
+       <p>Add your tile layers, markers, polygons, or KML overlays to each map instance</p>
+      </div>
+      <div class="flex gap-3"><span class="flex-shrink-0 w-8 h-8 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">3</span>
+       <p>Customize legends and popups to match your data visualization needs</p>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="mt-16 border-t border-cyan-100 bg-white/50 backdrop-blur-sm">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+     <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+       <svg class="w-8 h-8" viewbox="0 0 44 44" fill="none"><circle cx="22" cy="22" r="20" fill="url(#logoGrad2)" /> <defs>
+         <lineargradient id="logoGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0ea5e9" />
+          <stop offset="100%" style="stop-color:#0369a1" />
+         </lineargradient>
+        </defs> <path d="M22 10 C22 10 14 18 14 24 C14 28.4 17.6 32 22 32 C26.4 32 30 28.4 30 24 C30 18 22 10 22 10 Z" fill="white" opacity="0.9" />
+       </svg><span class="font-semibold text-gray-700">AquaFlow</span>
+      </div>
+      <p class="text-gray-500 text-sm">© 2024 AquaFlow. Water resource management made simple.</p>
+     </div>
+    </div>
+   </footer>
+  </div>
+  <script>
+    // Language translations
+    const translations = {
+      en: {
+        page_title: 'Region & Source Information',
+        page_subtitle: 'Explore water resources, regional data, and environmental insights through interactive maps',
+        card1_title: 'Water Sources',
+        card1_desc: 'View and analyze water source locations across different regions.',
+        card2_title: 'Regional Coverage',
+        card2_desc: 'Explore regional boundaries and coverage areas for water distribution.',
+        card3_title: 'Analytics View',
+        card3_desc: 'Data visualization and analytics for water resource management.',
+        instructions_title: 'How to Add Your Maps',
+        instructions_1: 'Initialize Leaflet maps targeting',
+        instructions_2: 'Add your tile layers, markers, polygons, or KML overlays to each map instance',
+        instructions_3: 'Customize legends and popups to match your data visualization needs',
+        footer_text: '© 2024 AquaFlow. Water resource management made simple.',
+        home: 'Home',
+        about: 'About',
+        water_monitoring: 'Water Monitoring',
+        leak_detection: 'Leak Detection',
+        ground_water: 'Ground Water',
+        dashboard: 'Dashboard',
+        maps: 'Maps',
+        contact: 'Contact',
+        login: 'Login'
+      },
+      ta: {
+        page_title: 'பிராந்தியம் & மூல தகவல்',
+        page_subtitle: 'ஊடாடும் வரைபடங்கள் மூலம் நீர் வளங்கள், பிராந்திய தரவு மற்றும் சுற்றுச்சூழல் நுண்ணறிவுகளை ஆராயுங்கள்',
+        card1_title: 'நீர் மூலங்கள்',
+        card1_desc: 'பல்வேறு பிராந்தியங்களில் நீர் மூல இடங்களைப் பார்க்கவும் பகுப்பாய்வு செய்யவும்.',
+        card2_title: 'பிராந்திய பாதுகாப்பு',
+        card2_desc: 'நீர் விநியோகத்திற்கான பிராந்திய எல்லைகள் மற்றும் பாதுகாப்பு பகுதிகளை ஆராயுங்கள்.',
+        card3_title: 'பகுப்பாய்வு காட்சி',
+        card3_desc: 'நீர் வள மேலாண்மைக்கான தரவு காட்சிப்படுத்தல் மற்றும் பகுப்பாய்வு.',
+        instructions_title: 'உங்கள் வரைபடங்களை எவ்வாறு சேர்ப்பது',
+        instructions_1: 'இலக்கு வைத்து Leaflet வரைபடங்களைத் தொடங்குங்கள்',
+        instructions_2: 'ஒவ்வொரு வரைபட நிகழ்விற்கும் உங்கள் டைல் அடுக்குகள், குறிப்பான்கள், பலகோணங்கள் அல்லது KML மேலடுக்குகளைச் சேர்க்கவும்',
+        instructions_3: 'உங்கள் தரவு காட்சிப்படுத்தல் தேவைகளுக்கு ஏற்ப புராணக்கதைகள் மற்றும் பாப்அப்களை தனிப்பயனாக்கவும்',
+        footer_text: '© 2024 AquaFlow. நீர் வள மேலாண்மை எளிதாக்கப்பட்டது.',
+        home: 'முகப்பு',
+        about: 'பற்றி',
+        water_monitoring: 'நீர் கண்காணிப்பு',
+        leak_detection: 'கசிவு கண்டறிதல்',
+        ground_water: 'நிலத்தடி நீர்',
+        dashboard: 'டாஷ்போர்டு',
+        maps: 'வரைபடங்கள்',
+        contact: 'தொடர்பு',
+        login: 'உள்நுழைய'
+      }
+    };
+
+    let currentLang = 'en';
+
+    // Default configuration
+    const defaultConfig = {
+      page_title: 'Region & Source Information',
+      card1_title: 'Water Sources',
+      card2_title: 'Regional Coverage',
+      card3_title: 'Analytics View',
+      primary_color: '#0ea5e9',
+      secondary_color: '#0284c7',
+      background_color: '#f0f9ff',
+      text_color: '#1e293b',
+      accent_color: '#06b6d4'
+    };
+
+    let config = { ...defaultConfig };
+
+    // Function to update language
+    function updateLanguage(lang) {
+      currentLang = lang;
+      const t = translations[lang];
+      
+      // Update language button text
+      document.getElementById('langText').textContent = lang.toUpperCase();
+      
+      // Update page content
+      document.getElementById('page-title').textContent = t.page_title;
+      document.querySelector('.text-gray-500.text-lg').textContent = t.page_subtitle;
+      
+      // Update card titles and descriptions
+      document.getElementById('card1-title').textContent = t.card1_title;
+      document.getElementById('card2-title').textContent = t.card2_title;
+      document.getElementById('card3-title').textContent = t.card3_title;
+      
+      document.querySelectorAll('.p-5.bg-gradient-to-b p')[0].textContent = t.card1_desc;
+      document.querySelectorAll('.p-5.bg-gradient-to-b p')[1].textContent = t.card2_desc;
+      document.querySelectorAll('.p-5.bg-gradient-to-b p')[2].textContent = t.card3_desc;
+      
+      // Update instructions
+      document.querySelector('.text-xl.font-bold.text-gray-800').innerHTML = `
+        <svg class="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        ${t.instructions_title}
+      `;
+      
+      const instructionParagraphs = document.querySelectorAll('.grid.md\\:grid-cols-3 p');
+      if (instructionParagraphs[0]) instructionParagraphs[0].innerHTML = t.instructions_1 + ' <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map1</code>, <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map2</code>, or <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map3</code>';
+      if (instructionParagraphs[1]) instructionParagraphs[1].textContent = t.instructions_2;
+      if (instructionParagraphs[2]) instructionParagraphs[2].textContent = t.instructions_3;
+      
+      // Update footer
+      document.querySelector('footer p').textContent = t.footer_text;
+      
+      // Update navigation links
+      const navLinks = document.querySelectorAll('.nav-link');
+      navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === 'heropage.html') link.textContent = t.home;
+        else if (href === 'home.html') link.textContent = t.about;
+        else if (href === 'water_monitor.html') link.textContent = t.water_monitoring;
+        else if (href === 'test2.html') link.textContent = t.leak_detection;
+        else if (href === 'groundwater.html') link.textContent = t.ground_water;
+        else if (href === 'waterscar.html') link.textContent = t.dashboard;
+        else if (link.classList.contains('active') && href === '#') link.textContent = t.maps;
+        else if (href === '#' && !link.classList.contains('active')) link.textContent = t.contact;
+      });
+      
+      // Update login button
+      const loginBtn = document.querySelector('.bg-gradient-to-r.from-cyan-500');
+      if (loginBtn) loginBtn.textContent = t.login;
+    }
+
+    // Language button click handler
+    document.getElementById('langBtn').addEventListener('click', function() {
+      const newLang = currentLang === 'en' ? 'ta' : 'en';
+      updateLanguage(newLang);
+    });
+
+    // Mobile menu toggle
+    document.getElementById('menuBtn').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          
+          // Update page title
+          const pageTitle = document.getElementById('page-title');
+          if (pageTitle) {
+            pageTitle.textContent = config.page_title || defaultConfig.page_title;
+          }
+          
+          // Update card titles
+          const card1Title = document.getElementById('card1-title');
+          if (card1Title) {
+            card1Title.textContent = config.card1_title || defaultConfig.card1_title;
+          }
+          
+          const card2Title = document.getElementById('card2-title');
+          if (card2Title) {
+            card2Title.textContent = config.card2_title || defaultConfig.card2_title;
+          }
+          
+          const card3Title = document.getElementById('card3-title');
+          if (card3Title) {
+            card3Title.textContent = config.card3_title || defaultConfig.card3_title;
+          }
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            {
+              get: () => cfg.background_color || defaultConfig.background_color,
+              set: (value) => {
+                cfg.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => cfg.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                cfg.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => cfg.text_color || defaultConfig.text_color,
+              set: (value) => {
+                cfg.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['page_title', cfg.page_title || defaultConfig.page_title],
+          ['card1_title', cfg.card1_title || defaultConfig.card1_title],
+          ['card2_title', cfg.card2_title || defaultConfig.card2_title],
+          ['card3_title', cfg.card3_title || defaultConfig.card3_title]
+        ])
+      });
+    }
+
+    // Example: Initialize sample Leaflet maps (uncomment and customize as needed)
+    /*
+    document.addEventListener('DOMContentLoaded', function() {
+      // Clear placeholder and initialize map 1
+      document.getElementById('map1').innerHTML = '';
+      const map1 = L.map('map1').setView([51.505, -0.09], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map1);
+
+      // Repeat for map2 and map3
+    });
+    */
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c21e68c43431794',t:'MTc2OTExNDc4NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

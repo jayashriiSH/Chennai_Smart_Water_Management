@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chennai Underground Tanks Map</title>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- Leaflet JS (IMPORTANT) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<script>
+  // -----------------------
+  // CREATE MAP
+  // -----------------------
+  const map = L.map("map").setView([13.0827, 80.2707], 11);
+
+  // Base map
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+
+  // -----------------------
+  // LOAD UNDERGROUND UGT
+  // -----------------------
+  fetch("ugt_points.geojson")
+    .then(res => res.json())
+    .then(data => {
+
+      L.geoJSON(data, {
+        pointToLayer: (feature, latlng) => {
+          return L.circleMarker(latlng, {
+            radius: 8,
+            color: "#003366",      // water outline
+            weight: 2,
+            fillColor: "#3b2f2f",  // soil color
+            fillOpacity: 0.45,
+            dashArray: "2,4"
+          });
+        },
+
+        onEachFeature: (f, layer) => {
+          layer.bindPopup(`
+            <b>🕳️ Underground Water Tank</b><br><br>
+            <b>Name:</b> ${f.properties.name_of_the_wds}<br>
+            <b>UGT ID:</b> ${f.properties.ugt_id}<br>
+            <b>Capacity:</b> ${f.properties.capacity_of_ugt_ml} ML<br>
+            <b>Depth:</b> ${f.properties.depth_of_ugt_m} m
+          `);
+        }
+      }).addTo(map);
+
+    });
+</script>
+
+</body>
+</html>

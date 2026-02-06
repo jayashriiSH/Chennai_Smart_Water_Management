@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chennai Water Supply Dashboard</title><!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .wave-gradient {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 25%, #0369a1 50%, #075985 75%, #0c4a6e 100%);
+        }
+        
+        .nav-link {
+            color: #4b5563;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #0284c7;
+        }
+        
+        .nav-link.active {
+            color: #0284c7;
+            font-weight: 600;
+        }
+        
+        iframe {
+            width: 100%;
+            min-height: 600px;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-auto">
+  <div class="min-h-full w-full"><!-- NAVBAR -->
+   <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+     <div class="flex items-center justify-between h-20"><!-- Logo -->
+      <div class="flex items-center gap-2">
+       <svg class="w-10 h-10" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#logoGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#06b6d4" />
+          <stop offset="100%" style="stop-color:#0369a1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">AquaFlow</span>
+      </div><!-- Desktop Menu -->
+      <div class="hidden lg:flex items-center gap-8"><a href="heropage.html" class="nav-link">Home</a> <a href="home.html" class="nav-link">About</a> <a href="water_monitor.html" class="nav-link">Water Monitoring</a> <a href="test2.html" class="nav-link">Leak Detection</a> <a href="groundwater.html" class="nav-link">Ground water</a> <a href="#" class="nav-link active">Dashboard</a> <a href="contact.html" class="nav-link">Reservoir</a> <a href="scnerio.html" class="nav-link">Scenario Engine</a>
+      </div><!-- Right Side -->
+      <div class="flex items-center gap-4"><button id="langBtn" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+        </svg><span id="langText" class="hidden md:inline font-medium">EN</span> </button> <button class="hidden md:block px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"> Login </button> <!-- Mobile Menu Button --> <button id="menuBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg></button>
+      </div>
+     </div>
+    </div><!-- Mobile Menu -->
+    <div id="mobileMenu" class="lg:hidden hidden bg-white border-t border-gray-100">
+     <div class="flex flex-col px-6 py-4 gap-4"><a href="#" class="nav-link">Home</a> <a href="#" class="nav-link">About</a> <a href="#" class="nav-link">Water Monitoring</a> <a href="#" class="nav-link">Leak Detection</a> <a href="#" class="nav-link">Water Quality</a> <a href="#" class="nav-link active">Dashboard</a> <a href="#" class="nav-link">Contact</a>
+     </div>
+    </div>
+   </nav><!-- HEADER SECTION -->
+   <section class="wave-gradient py-20 lg:py-28 text-center relative overflow-hidden"><!-- Decorative elements -->
+    <div class="absolute inset-0 opacity-10">
+     <svg class="absolute top-10 left-10 w-32 h-32" viewbox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="white" opacity="0.3" />
+     </svg>
+     <svg class="absolute bottom-10 right-10 w-40 h-40" viewbox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="white" opacity="0.2" />
+     </svg>
+    </div>
+    <div class="max-w-4xl mx-auto px-6 relative z-10">
+     <h1 data-translate="hero-title" class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">Chennai Water Supply Dashboard</h1>
+     <p data-translate="hero-subtitle" class="text-xl md:text-2xl text-cyan-50 font-light">Real-time visualization of water supply capacity data</p>
+    </div>
+   </section><!-- DATA SECTION -->
+   <section class="py-16 lg:py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8"><!-- Section Header -->
+     <div class="text-center max-w-3xl mx-auto mb-12">
+      <h2 data-translate="section-title" class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Water Supply Capacity – Chennai</h2>
+      <p data-translate="section-desc" class="text-lg text-gray-600 leading-relaxed">This dashboard presents official open data on Chennai's water supply capacity. The visualization helps analyze distribution trends and supports smart water management and planning.</p>
+     </div><!-- Data Visualization Frame -->
+     <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-6 md:p-8 rounded-2xl shadow-lg"><iframe title="Chennai Water Supply Data" src="https://data.opencity.in/dataset/chennai-watersupply-capacity/resource/1b0b6b79-3cbe-47db-a3be-a3b364ba9c79/view/58bc75c3-0931-4fd4-9392-0e1f31676342" class="w-full" style="min-height: 600px;"> </iframe>
+     </div><!-- Info Cards -->
+     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+      <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+       <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+       </div>
+       <h3 data-translate="card1-title" class="text-lg font-bold text-gray-900 mb-2">Real-Time Data</h3>
+       <p data-translate="card1-desc" class="text-gray-600 text-sm">Live updates on water supply capacity across Chennai</p>
+      </div>
+      <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+       <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+       </div>
+       <h3 data-translate="card2-title" class="text-lg font-bold text-gray-900 mb-2">Open Government Data</h3>
+       <p data-translate="card2-desc" class="text-gray-600 text-sm">Transparent and verified official city data</p>
+      </div>
+      <div class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+       <div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-4">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+       </div>
+       <h3 data-translate="card3-title" class="text-lg font-bold text-gray-900 mb-2">Trend Analysis</h3>
+       <p data-translate="card3-desc" class="text-gray-600 text-sm">Track distribution patterns and capacity trends</p>
+      </div>
+     </div>
+    </div>
+   </section><!-- AI DASHBOARD SECTION -->
+   <section class="py-16 bg-gradient-to-br from-blue-50 via-cyan-50 to-white">
+    <div class="max-w-4xl mx-auto px-6 lg:px-8">
+     <div class="bg-white border-2 border-blue-100 rounded-2xl p-8 md:p-10 shadow-xl hover:shadow-2xl transition-shadow"><!-- Icon -->
+      <div class="flex justify-center mb-6">
+       <div class="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+       </div>
+      </div><!-- Title -->
+      <h3 data-translate="ai-title" class="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-4">Chennai Smart Water Intelligence Dashboard</h3><!-- Description -->
+      <p data-translate="ai-desc" class="text-base md:text-lg text-gray-600 text-center mb-8 leading-relaxed">Live digital twin monitoring of Chennai reservoirs using AI-based inflow–outflow analysis.</p><!-- Button -->
+      <div class="flex justify-center"><a href="https://availdashboard.streamlit.app" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all"> <span class="text-2xl">🚀</span> <span data-translate="ai-button">Open Live Dashboard</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg></a>
+      </div><!-- Badge -->
+      <div class="flex justify-center mt-6"><span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm font-medium"> <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> <span data-translate="ai-badge">Live &amp; Active</span> </span>
+      </div>
+     </div>
+    </div>
+   </section><!-- FOOTER -->
+   <footer class="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-8">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+     <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+       <svg class="w-8 h-8" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#footerLogoGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="footerLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#06b6d4" />
+          <stop offset="100%" style="stop-color:#0369a1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-xl font-bold">AquaFlow</span>
+      </div>
+      <p class="text-gray-300 text-sm text-center">© 2026 AquaFlow Water Management System | Open Government Data</p>
+      <div class="flex items-center gap-4"><a href="#" class="text-gray-300 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+        </svg></a> <a href="#" class="text-gray-300 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+        </svg></a>
+      </div>
+     </div>
+    </div>
+   </footer>
+  </div>
+  <script>
+        // Mobile menu toggle
+        const menuBtn = document.getElementById('menuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Language toggle functionality
+        const langBtn = document.getElementById('langBtn');
+        const langText = document.getElementById('langText');
+        let currentLang = 'en';
+
+        const translations = {
+            en: {
+                'hero-title': 'Chennai Water Supply Dashboard',
+                'hero-subtitle': 'Real-time visualization of water supply capacity data',
+                'section-title': 'Water Supply Capacity – Chennai',
+                'section-desc': 'This dashboard presents official open data on Chennai\'s water supply capacity. The visualization helps analyze distribution trends and supports smart water management and planning.',
+                'card1-title': 'Real-Time Data',
+                'card1-desc': 'Live updates on water supply capacity across Chennai',
+                'card2-title': 'Open Government Data',
+                'card2-desc': 'Transparent and verified official city data',
+                'card3-title': 'Trend Analysis',
+                'card3-desc': 'Track distribution patterns and capacity trends',
+                'ai-title': 'Chennai Smart Water Intelligence Dashboard',
+                'ai-desc': 'Live digital twin monitoring of Chennai reservoirs using AI-based inflow–outflow analysis.',
+                'ai-button': 'Open Live Dashboard',
+                'ai-badge': 'Live & Active'
+            },
+            ta: {
+                'hero-title': 'சென்னை நீர் வழங்கல் டாஷ்போர்டு',
+                'hero-subtitle': 'நீர் வழங்கல் திறன் தரவுகளின் நேரடி காட்சிப்படுத்தல்',
+                'section-title': 'நீர் வழங்கல் திறன் – சென்னை',
+                'section-desc': 'இந்த டாஷ்போர்டு சென்னையின் நீர் வழங்கல் திறன் பற்றிய அதிகாரப்பூர்வ திறந்த தரவை வழங்குகிறது. இந்த காட்சிப்படுத்தல் விநியோக போக்குகளை பகுப்பாய்வு செய்து, ஸ்மார்ட் நீர் மேலாண்மை மற்றும் திட்டமிடலுக்கு உதவுகிறது.',
+                'card1-title': 'நேரடி தரவு',
+                'card1-desc': 'சென்னை முழுவதும் நீர் வழங்கல் திறன் பற்றிய நேரடி புதுப்பிப்புகள்',
+                'card2-title': 'திறந்த அரசாங்க தரவு',
+                'card2-desc': 'வெளிப்படையான மற்றும் சரிபார்க்கப்பட்ட அதிகாரப்பூர்வ நகர தரவு',
+                'card3-title': 'போக்கு பகுப்பாய்வு',
+                'card3-desc': 'விநியோக முறைகள் மற்றும் திறன் போக்குகளை கண்காணிக்கவும்',
+                'ai-title': 'சென்னை ஸ்மார்ட் வாட்டர் இன்டலிஜென்ஸ் டாஷ்போர்டு',
+                'ai-desc': 'AI அடிப்படையிலான உள்வரும்-வெளிச்செல்லும் பகுப்பாய்வைப் பயன்படுத்தி சென்னை நீர்த்தேக்கங்களின் நேரடி டிஜிட்டல் இரட்டை கண்காணிப்பு.',
+                'ai-button': 'நேரடி டாஷ்போர்டை திறக்கவும்',
+                'ai-badge': 'நேரடி மற்றும் செயல்பாட்டில்'
+            }
+        };
+
+        langBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'ta' : 'en';
+            langText.textContent = currentLang === 'en' ? 'EN' : 'த';
+            
+            // Update all translated elements
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[currentLang][key]) {
+                    element.textContent = translations[currentLang][key];
+                }
+            });
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9bfe937253833b3a',t:'MTc2ODc0NDM3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

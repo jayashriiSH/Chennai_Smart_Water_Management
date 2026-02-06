@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chennai City Water Analytics System Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<style>
+    body {
+  font-family: Inter, sans-serif;
+  background: #f8fbff;
+  margin: 0;
+}
+
+header {
+  padding: 25px;
+  font-size: 26px;
+  font-weight: 800;
+  background: #0ea5e9;
+  color: white;
+  text-align: center;
+}
+
+.canvas {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+  padding: 40px;
+  overflow-x: auto;
+}
+
+.layer {
+  min-width: 340px;
+  border-radius: 14px;
+  padding: 18px;
+  background: white;
+  border: 2px solid;
+}
+
+.layer h3 {
+  margin-bottom: 14px;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.grid,
+.subgrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.box {
+  background: #f1f5f9;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.subbox {
+  margin-top: 12px;
+  background: #eef2ff;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.arrow {
+  font-size: 30px;
+  margin-top: 80px;
+  color: #64748b;
+}
+
+/* Colors */
+.blue { border-color: #2563eb; }
+.purple { border-color: #7c3aed; }
+.orange { border-color: #f97316; }
+.green { border-color: #22c55e; }
+.red { border-color: #ef4444; }
+.yellow { border-color: #eab308; }
+
+</style>
+<body>
+
+<header>
+  Chennai City Water Analytics System Architecture
+</header>
+
+<div class="canvas">
+
+  <!-- DATA SOURCES -->
+  <section class="layer blue">
+    <h3>DATA SOURCES LAYER</h3>
+
+    <div class="grid">
+      <div class="box">🌧️ Rainfall Data<br><small>Historical + Monthly</small></div>
+      <div class="box">💧 Groundwater Level<br><small>Ward / Zone-wise</small></div>
+      <div class="box">👥 Population & Demand</div>
+      <div class="box">📊 Zone Supply & Demand (MLD)</div>
+    </div>
+
+    <div class="subgrid">
+      <div class="subbox">
+        <b>IoT Sensors</b>
+        <p>Flow Sensors</p>
+        <p>Pressure Sensors</p>
+        <p>Leak Sensors</p>
+      </div>
+
+      <div class="subbox">
+        <b>Reservoir Data</b>
+        <p>Poondi • Red Hills • Chembarambakkam</p>
+        <p>Inflow • Outflow • Storage • Gate Release</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- INGESTION -->
+  <section class="layer purple">
+    <h3>DATA INGESTION & STORAGE</h3>
+
+    <div class="grid">
+      <div class="box">API Integration</div>
+      <div class="box">CSV Upload</div>
+      <div class="box">Sensor Streams</div>
+    </div>
+
+    <div class="subbox">
+      <b>Central Water Database</b>
+      <p>Time-series • Zone Tables • Reservoir Tables • Sensor Logs</p>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- PROCESSING -->
+  <section class="layer orange">
+    <h3>DATA PROCESSING & FEATURE ENGINEERING</h3>
+
+    <div class="grid">
+      <div class="box">Data Cleaning</div>
+      <div class="box">Temporal Aggregation</div>
+    </div>
+
+    <div class="subgrid">
+      <div class="box">Rainfall Lag Effect</div>
+      <div class="box">Groundwater Memory</div>
+      <div class="box">Supply–Demand Gap</div>
+      <div class="box">Pressure Variation</div>
+      <div class="box">Reservoir Inflow–Outflow Balance</div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- AI ENGINE -->
+  <section class="layer green">
+    <h3>AI & ANALYTICS ENGINE</h3>
+
+    <div class="subgrid">
+      <div class="box">Groundwater Prediction<br><small>RF + Gradient Boosting</small></div>
+      <div class="box">Water Demand Prediction<br><small>Population + Usage</small></div>
+      <div class="box">Leak & Burst Detection</div>
+      <div class="box">Risk Assessment<br><small>Normal / Stress / Critical</small></div>
+      <div class="box">System Intelligence Engine</div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- DECISION -->
+  <section class="layer red">
+    <h3>DECISION SUPPORT & ALERT SYSTEM</h3>
+
+    <div class="subgrid">
+      <div class="box">Incident Management</div>
+      <div class="box">Severity Classification</div>
+      <div class="box">Resolution Tracking</div>
+      <div class="box">Rule-based Advisory</div>
+      <div class="box">Preventive Alerts</div>
+    </div>
+  </section>
+
+  <div class="arrow">→</div>
+
+  <!-- DASHBOARD -->
+  <section class="layer yellow">
+    <h3>VISUALIZATION & DASHBOARD LAYER</h3>
+
+    <div class="subgrid">
+      <div class="box">City Map</div>
+      <div class="box">Water Supply Dashboard</div>
+      <div class="box">Trend Analysis (2020–2027)</div>
+      <div class="box">Leak Detection Dashboard</div>
+      <div class="box">Risk Heatmap</div>
+      <div class="box">Reservoir Monitoring Panel</div>
+      <div class="box">System Intelligence Panel</div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

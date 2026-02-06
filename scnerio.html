@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaFlow Scenario Engine</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Outfit', sans-serif;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+
+    .dashboard-bg {
+      background: linear-gradient(165deg, #0a1628 0%, #132a47 30%, #1a3a5c 60%, #0f2744 100%);
+      min-height: 100%;
+    }
+
+    .scenario-card {
+      background: linear-gradient(135deg, rgba(16, 42, 67, 0.95) 0%, rgba(20, 50, 80, 0.98) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 24px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .scenario-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 50%, #0ea5e9 100%);
+    }
+
+    .scenario-card:hover {
+      transform: translateY(-12px);
+      border-color: rgba(59, 130, 246, 0.6);
+      box-shadow: 
+        0 25px 60px -15px rgba(59, 130, 246, 0.4),
+        0 0 0 1px rgba(59, 130, 246, 0.2);
+    }
+
+    .card-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 16px;
+      padding: 16px;
+      display: inline-flex;
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.5);
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .stat-item {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #60a5fa;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    .fade-in-delay-1 {
+      animation-delay: 0.2s;
+      opacity: 0;
+    }
+
+    .fade-in-delay-2 {
+      animation-delay: 0.4s;
+      opacity: 0;
+    }
+
+    .glow-effect {
+      box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+    }
+
+    .tech-pattern {
+      background-image: 
+        linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full w-full">
+  <div class="min-h-full w-full dashboard-bg tech-pattern"><!-- NAVBAR -->
+   <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+     <div class="flex items-center justify-between h-20"><!-- Logo -->
+      <div class="flex items-center gap-2">
+       <svg class="w-10 h-10" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#logoGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0369a1;stop-opacity:1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">AquaFlow</span>
+      </div><!-- Desktop Navigation -->
+      <div class="hidden lg:flex items-center gap-8"><a href="heropage.html" class="nav-link text-gray-700 hover:text-blue-600 transition-colors font-medium">Home</a> <a href="home.html" class="nav-link text-gray-700 hover:text-blue-600 transition-colors font-medium">About</a> <a href="water_monitor.html" class="nav-link text-gray-700 hover:text-blue-600 transition-colors font-medium">Water Monitoring</a> <a href="test2.html" class="nav-link text-gray-700 hover:text-blue-600 transition-colors font-medium">Leak Detection</a> <a href="groundwater.html" class="nav-link text-gray-700 hover:text-blue-600 transition-colors font-medium">Ground Water</a> <a href="waterscar.html" class="nav-link text-gray-700 hover:text-blue-600 transition-colors font-medium">Dashboard</a> <a href="scnerio.html" class="nav-link text-blue-600 font-semibold relative"> Scenario Engine <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-500 to-blue-600"></span> </a> <a href="#" class="nav-link text-gray-700 hover:text-blue-600 transition-colors font-medium">Contact</a>
+      </div><!-- Right Side -->
+      <div class="flex items-center gap-4"><button id="langBtn" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+        </svg><span id="langText" class="hidden md:inline font-medium">EN</span> </button> <button class="hidden md:block px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"> Login </button> <!-- Mobile Menu Button --> <button id="menuBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg></button>
+      </div>
+     </div>
+    </div><!-- Mobile Menu -->
+    <div id="mobileMenu" class="lg:hidden hidden bg-white border-t border-gray-100">
+     <div class="flex flex-col px-6 py-4 gap-4"><a href="heropage.html" class="text-gray-700 hover:text-blue-600 transition-colors">Home</a> <a href="home.html" class="text-gray-700 hover:text-blue-600 transition-colors">About</a> <a href="water_monitor.html" class="text-gray-700 hover:text-blue-600 transition-colors">Water Monitoring</a> <a href="test2.html" class="text-gray-700 hover:text-blue-600 transition-colors">Leak Detection</a> <a href="groundwater.html" class="text-gray-700 hover:text-blue-600 transition-colors">Ground Water</a> <a href="waterscar.html" class="text-gray-700 hover:text-blue-600 transition-colors">Dashboard</a> <a href="#" class="text-blue-600 font-semibold">Maps</a> <a href="#" class="text-gray-700 hover:text-blue-600 transition-colors">Contact</a>
+     </div>
+    </div>
+   </nav><!-- Header Section -->
+   <div class="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+    <div class="text-center mb-16 fade-in-up">
+     <div class="inline-flex items-center gap-3 mb-6 float-animation">
+      <svg class="w-12 h-12" viewbox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="22" fill="url(#waveGrad)" opacity="0.2" /> <circle cx="24" cy="24" r="18" fill="url(#waveGrad)" /> <path d="M24 12 C24 12 16 20 16 26 C16 30.4 19.6 34 24 34 C28.4 34 32 30.4 32 26 C32 20 24 12 24 12 Z" fill="white" opacity="0.9" /> <defs>
+        <lineargradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+         <stop offset="0%" style="stop-color:#3b82f6" />
+         <stop offset="100%" style="stop-color:#06b6d4" />
+        </lineargradient>
+       </defs>
+      </svg>
+      <h1 id="main-title" class="text-5xl lg:text-6xl font-bold gradient-text" style="font-family: 'Space Grotesk', sans-serif;">🌊 AquaFlow — Scenario Engine</h1>
+     </div>
+     <p id="subtitle" class="text-xl text-blue-200 font-light">What-If Water Stress Simulation for Chennai</p>
+    </div><!-- Cards Grid -->
+    <div class="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto"><!-- Card 1: Zone-Wise Impact Analysis -->
+     <div class="scenario-card fade-in-up fade-in-delay-1">
+      <div class="p-8"><!-- Icon -->
+       <div class="card-icon mb-6 float-animation">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+       </div><!-- Title -->
+       <h2 id="card1-title" class="text-3xl font-bold text-white mb-3" style="font-family: 'Space Grotesk', sans-serif;">📊 Zone-Wise Impact Analysis</h2>
+       <p id="card1-subtitle" class="text-blue-200 mb-6">Simulate water stress scenarios across Chennai zones with real-time impact metrics</p><!-- Stats Grid -->
+       <div class="stats-grid">
+        <div class="stat-item">
+         <div class="stat-value">
+          15
+         </div>
+         <div class="stat-label">
+          Zones
+         </div>
+        </div>
+        <div class="stat-item">
+         <div class="stat-value">
+          24/7
+         </div>
+         <div class="stat-label">
+          Monitoring
+         </div>
+        </div>
+        <div class="stat-item">
+         <div class="stat-value">
+          Real-time
+         </div>
+         <div class="stat-label">
+          Updates
+         </div>
+        </div>
+       </div><!-- Features List -->
+       <div class="mt-6 space-y-3">
+        <div class="flex items-start gap-3 text-blue-100">
+         <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+         </svg><span class="text-sm">Interactive zone-level water stress heatmaps</span>
+        </div>
+        <div class="flex items-start gap-3 text-blue-100">
+         <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+         </svg><span class="text-sm">Multi-variable scenario testing &amp; forecasting</span>
+        </div>
+        <div class="flex items-start gap-3 text-blue-100">
+         <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+         </svg><span class="text-sm">Export reports for policy planning</span>
+        </div>
+       </div><!-- CTA Button -->
+       <div class="mt-8"><a href="http://localhost:8502/" target="_blank" rel="noopener noreferrer" class="btn-primary w-full inline-block text-center"> View Dashboard → </a>
+       </div>
+      </div>
+     </div><!-- Card 2: Chennai Water Intelligence System -->
+     <div class="scenario-card fade-in-up fade-in-delay-2">
+      <div class="p-8"><!-- Icon -->
+       <div class="card-icon mb-6 float-animation" style="animation-delay: 0.5s;">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+       </div><!-- Title -->
+       <h2 id="card2-title" class="text-3xl font-bold text-white mb-3" style="font-family: 'Space Grotesk', sans-serif;">Chennai Water Intelligence System (CWIS)</h2>
+       <p id="card2-subtitle" class="text-blue-200 mb-6">AI-powered Urban Water Digital Twin using ML Models</p><!-- Stats Grid -->
+       <div class="stats-grid">
+        <div class="stat-item">
+         <div class="stat-value">
+          AI/ML
+         </div>
+         <div class="stat-label">
+          Powered
+         </div>
+        </div>
+        <div class="stat-item">
+         <div class="stat-value">
+          Digital
+         </div>
+         <div class="stat-label">
+          Twin
+         </div>
+        </div>
+        <div class="stat-item">
+         <div class="stat-value">
+          Live
+         </div>
+         <div class="stat-label">
+          Simulation
+         </div>
+        </div>
+       </div><!-- Features List -->
+       <div class="mt-6 space-y-3">
+        <div class="flex items-start gap-3 text-blue-100">
+         <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+         </svg><span class="text-sm">Calculate water storage simulation dynamically</span>
+        </div>
+        <div class="flex items-start gap-3 text-blue-100">
+         <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+         </svg><span class="text-sm">Predictive analytics for demand forecasting</span>
+        </div>
+        <div class="flex items-start gap-3 text-blue-100">
+         <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+         </svg><span class="text-sm">Integrated ML models for optimization</span>
+        </div>
+       </div><!-- CTA Button -->
+       <div class="mt-8"><a href="http://localhost:8503/" target="_blank" rel="noopener noreferrer" class="btn-primary w-full inline-block text-center"> Launch CWIS → </a>
+       </div>
+      </div>
+     </div>
+    </div><!-- Info Footer -->
+    <div class="mt-16 text-center">
+     <p class="text-blue-300 text-sm">🔬 Advanced water resource management powered by data science &amp; machine learning</p>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Language translations
+    const translations = {
+      en: {
+        page_title: 'Region & Source Information',
+        page_subtitle: 'Explore water resources, regional data, and environmental insights through interactive maps',
+        card1_title: 'Water Sources',
+        card1_desc: 'View and analyze water source locations across different regions.',
+        card2_title: 'Regional Coverage',
+        card2_desc: 'Explore regional boundaries and coverage areas for water distribution.',
+        card3_title: 'Analytics View',
+        card3_desc: 'Data visualization and analytics for water resource management.',
+        instructions_title: 'How to Add Your Maps',
+        instructions_1: 'Initialize Leaflet maps targeting',
+        instructions_2: 'Add your tile layers, markers, polygons, or KML overlays to each map instance',
+        instructions_3: 'Customize legends and popups to match your data visualization needs',
+        footer_text: '© 2024 AquaFlow. Water resource management made simple.',
+        home: 'Home',
+        about: 'About',
+        water_monitoring: 'Water Monitoring',
+        leak_detection: 'Leak Detection',
+        ground_water: 'Ground Water',
+        dashboard: 'Dashboard',
+        maps: 'Maps',
+        contact: 'Contact',
+        login: 'Login'
+      },
+      ta: {
+        page_title: 'பிராந்தியம் & மூல தகவல்',
+        page_subtitle: 'ஊடாடும் வ��ைபடங்கள் மூலம����� நீர் வளங்கள், பிராந்திய தரவு மற்றும் சுற்றுச்சூழல் நுண்ணறிவுகளை ஆராயுங்கள்',
+        card1_title: 'நீர் மூலங்கள்',
+        card1_desc: 'பல்வ��று பிராந்தியங்களில�� நீர் மூல இடங்களைப் பார்க்கவும் பகுப்பாய்வு செய்யவும்.',
+        card2_title: 'பிராந்திய பாதுகாப்பு',
+        card2_desc: 'நீர் விநியோகத்திற்கான பிராந்திய எல்லைகள் மற்றும் பாதுகாப்பு பகுதிகளை ஆராயுங்கள்.',
+        card3_title: 'பகுப்பாய்வு காட்சி',
+        card3_desc: 'நீர் வள மேலா��்ம��க்கான தரவு காட்சிப்படுத்தல் மற்றும் பகுப்பாய்வு.',
+        instructions_title: 'உங்கள் வரைபடங்களை எவ்வாறு சேர்ப்பது',
+        instructions_1: 'இலக்கு வைத்து Leaflet வரைபடங்களைத் தொடங்குங்கள்',
+        instructions_2: 'ஒவ்வொரு வரைபட நிகழ்விற்கும் உங்கள் டைல் அடுக்குகள், குறிப்பான்கள், பலகோணங்கள் அல்லது KML மேலடுக்குகளைச் சேர்க்கவும்',
+        instructions_3: 'உங்கள் தரவு காட்சிப்படுத்தல் தேவைகளுக்கு ஏற்ப புராணக்கதைகள் மற்றும் பாப்அப்களை தன��ப��பயனாக்கவும்',
+        footer_text: '© 2024 AquaFlow. நீர் வள மேலாண்மை எளிதாக்கப்பட்டது.',
+        home: 'ம��கப்பு',
+        about: 'பற்றி',
+        water_monitoring: 'நீர் கண்காணிப்பு',
+        leak_detection: 'கசிவு கண்டறிதல்',
+        ground_water: 'நிலத்தடி நீர்',
+        dashboard: 'டாஷ்போர்டு',
+        maps: 'வரைபடங்கள்',
+        contact: 'தொடர்பு',
+        login: 'உள்நு��ைய'
+      }
+    };
+
+    let currentLang = 'en';
+
+    // Default configuration
+    const defaultConfig = {
+      page_title: 'Region & Source Information',
+      card1_title: 'Water Sources',
+      card2_title: 'Regional Coverage',
+      card3_title: 'Analytics View',
+      primary_color: '#0ea5e9',
+      secondary_color: '#0284c7',
+      background_color: '#f0f9ff',
+      text_color: '#1e293b',
+      accent_color: '#06b6d4'
+    };
+
+    let config = { ...defaultConfig };
+
+    // Function to update language
+    function updateLanguage(lang) {
+      currentLang = lang;
+      const t = translations[lang];
+      
+      // Update language button text
+      document.getElementById('langText').textContent = lang.toUpperCase();
+      
+      // Update page content
+      document.getElementById('page-title').textContent = t.page_title;
+      document.querySelector('.text-gray-500.text-lg').textContent = t.page_subtitle;
+      
+      // Update card titles and descriptions
+      document.getElementById('card1-title').textContent = t.card1_title;
+      document.getElementById('card2-title').textContent = t.card2_title;
+      document.getElementById('card3-title').textContent = t.card3_title;
+      
+      document.querySelectorAll('.p-5.bg-gradient-to-b p')[0].textContent = t.card1_desc;
+      document.querySelectorAll('.p-5.bg-gradient-to-b p')[1].textContent = t.card2_desc;
+      document.querySelectorAll('.p-5.bg-gradient-to-b p')[2].textContent = t.card3_desc;
+      
+      // Update instructions
+      document.querySelector('.text-xl.font-bold.text-gray-800').innerHTML = `
+        <svg class="w-6 h-6 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        ${t.instructions_title}
+      `;
+      
+      const instructionParagraphs = document.querySelectorAll('.grid.md\\:grid-cols-3 p');
+      if (instructionParagraphs[0]) instructionParagraphs[0].innerHTML = t.instructions_1 + ' <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map1</code>, <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map2</code>, or <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">#map3</code>';
+      if (instructionParagraphs[1]) instructionParagraphs[1].textContent = t.instructions_2;
+      if (instructionParagraphs[2]) instructionParagraphs[2].textContent = t.instructions_3;
+      
+      // Update footer
+      document.querySelector('footer p').textContent = t.footer_text;
+      
+      // Update navigation links
+      const navLinks = document.querySelectorAll('.nav-link');
+      navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === 'heropage.html') link.textContent = t.home;
+        else if (href === 'home.html') link.textContent = t.about;
+        else if (href === 'water_monitor.html') link.textContent = t.water_monitoring;
+        else if (href === 'test2.html') link.textContent = t.leak_detection;
+        else if (href === 'groundwater.html') link.textContent = t.ground_water;
+        else if (href === 'waterscar.html') link.textContent = t.dashboard;
+        else if (link.classList.contains('active') && href === '#') link.textContent = t.maps;
+        else if (href === '#' && !link.classList.contains('active')) link.textContent = t.contact;
+      });
+      
+      // Update login button
+      const loginBtn = document.querySelector('.bg-gradient-to-r.from-cyan-500');
+      if (loginBtn) loginBtn.textContent = t.login;
+    }
+
+    // Language button click handler
+    document.getElementById('langBtn').addEventListener('click', function() {
+      const newLang = currentLang === 'en' ? 'ta' : 'en';
+      updateLanguage(newLang);
+    });
+
+    // Mobile menu toggle
+    document.getElementById('menuBtn').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (newConfig) => {
+          config = { ...defaultConfig, ...newConfig };
+          
+          // Update page title
+          const pageTitle = document.getElementById('page-title');
+          if (pageTitle) {
+            pageTitle.textContent = config.page_title || defaultConfig.page_title;
+          }
+          
+          // Update card titles
+          const card1Title = document.getElementById('card1-title');
+          if (card1Title) {
+            card1Title.textContent = config.card1_title || defaultConfig.card1_title;
+          }
+          
+          const card2Title = document.getElementById('card2-title');
+          if (card2Title) {
+            card2Title.textContent = config.card2_title || defaultConfig.card2_title;
+          }
+          
+          const card3Title = document.getElementById('card3-title');
+          if (card3Title) {
+            card3Title.textContent = config.card3_title || defaultConfig.card3_title;
+          }
+        },
+        mapToCapabilities: (cfg) => ({
+          recolorables: [
+            {
+              get: () => cfg.background_color || defaultConfig.background_color,
+              set: (value) => {
+                cfg.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => cfg.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                cfg.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => cfg.text_color || defaultConfig.text_color,
+              set: (value) => {
+                cfg.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (cfg) => new Map([
+          ['page_title', cfg.page_title || defaultConfig.page_title],
+          ['card1_title', cfg.card1_title || defaultConfig.card1_title],
+          ['card2_title', cfg.card2_title || defaultConfig.card2_title],
+          ['card3_title', cfg.card3_title || defaultConfig.card3_title]
+        ])
+      });
+    }
+
+    // Example: Initialize sample Leaflet maps (uncomment and customize as needed)
+    /*
+    document.addEventListener('DOMContentLoaded', function() {
+      // Clear placeholder and initialize map 1
+      document.getElementById('map1').innerHTML = '';
+      const map1 = L.map('map1').setView([51.505, -0.09], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map1);
+
+      // Repeat for map2 and map3
+    });
+    */
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c24cda7153879f4',t:'MTc2OTE0NTIyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chennai Water Supply Dashboard</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .wave-gradient {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 25%, #0369a1 50%, #075985 75%, #0c4a6e 100%);
+    }
+
+    .nav-link {
+      color: #4b5563;
+      transition: color 0.3s ease;
+      font-weight: 500;
+    }
+    
+    .nav-link:hover {
+      color: #0284c7;
+    }
+    
+    .nav-link.active {
+      color: #0284c7;
+      font-weight: 600;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      border-color: #0ea5e9;
+    }
+
+    .city-zone {
+      position: relative;
+      padding: 32px;
+      border-radius: 16px;
+      background: white;
+      border: 2px solid #e5e7eb;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .city-zone::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.05) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .city-zone:hover::before {
+      opacity: 1;
+    }
+
+    .city-zone:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .city-zone-ok {
+      border-color: #10b981;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    }
+
+    .city-zone-warning {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-color: #f59e0b;
+      animation: pulse-warning 2s infinite;
+      box-shadow: 0 8px 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .city-zone-danger {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-color: #ef4444;
+      animation: pulse-danger 1.5s infinite;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+    }
+
+    @keyframes pulse-warning {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes pulse-danger {
+      0%, 100% { transform: scale(1); box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3); }
+      50% { transform: scale(1.03); box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4); }
+    }
+
+    .zone-label {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1f2937;
+      position: relative;
+      z-index: 1;
+    }
+
+    .zone-status {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-top: 8px;
+      position: relative;
+      z-index: 1;
+      font-weight: 500;
+    }
+
+    .city-zone-warning .zone-label,
+    .city-zone-danger .zone-label {
+      color: #1f2937;
+    }
+
+    .city-zone-warning .zone-status {
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    .city-zone-danger .zone-status {
+      color: #991b1b;
+      font-weight: 600;
+    }
+
+    .heatmap-cell {
+      padding: 24px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      text-align: center;
+      font-weight: 600;
+      border: 2px solid transparent;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .heatmap-cell:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+    }
+
+    .heatmap-safe {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+    }
+
+    .heatmap-low {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+    }
+
+    .heatmap-medium {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+
+    .heatmap-high {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+
+    .content-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .blink-indicator {
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .city-zone-maintenance {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-color: #3b82f6;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+    }
+
+    .city-zone-maintenance .zone-status {
+      color: #1e40af;
+      font-weight: 600;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .report-btn {
+      margin-top: 12px;
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.875rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .report-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .report-card {
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .report-card:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    }
+
+    .severity-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .severity-low {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .severity-medium {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .severity-high {
+      background: #fed7aa;
+      color: #9a3412;
+    }
+
+    .severity-critical {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-50 via-white to-blue-50 overflow-auto">
+  <div class="min-h-full w-full"><!-- NAVBAR -->
+   <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+     <div class="flex items-center justify-between h-20"><!-- Logo -->
+      <div class="flex items-center gap-2">
+       <svg class="w-10 h-10" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#logoGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#06b6d4" />
+          <stop offset="100%" style="stop-color:#0369a1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">AquaFlow</span>
+      </div><!-- Desktop Menu -->
+      <div class="hidden lg:flex items-center gap-8"><a href="heropage.html" class="nav-link">Home</a> <a href="home.html" class="nav-link">About</a> <a href="water_monitor.html" class="nav-link">Water Monitoring</a> <a href="test2.html" class="nav-link active">Leak Detection</a> <a href="groundwater.html" class="nav-link">Ground Water</a> <a href="waterscar.html" class="nav-link">Dashboard</a> <a href="#" class="nav-link">Contact</a>
+      </div><!-- Right Side -->
+      <div class="flex items-center gap-4"><button id="langBtn" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+        </svg><span id="langText" class="hidden md:inline font-medium">EN</span> </button> <button class="hidden md:block px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"> Login </button> <!-- Mobile Menu Button --> <button id="menuBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg></button>
+      </div>
+     </div>
+    </div><!-- Mobile Menu -->
+    <div id="mobileMenu" class="lg:hidden hidden bg-white border-t border-gray-100">
+     <div class="flex flex-col px-6 py-4 gap-4"><a href="#" class="nav-link">Home</a> <a href="#" class="nav-link">About</a> <a href="#" class="nav-link">Water Monitoring</a> <a href="#" class="nav-link active">Leak Detection</a> <a href="#" class="nav-link">Water Quality</a> <a href="#" class="nav-link">Dashboard</a> <a href="#" class="nav-link">Contact</a>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-6 py-8"><!-- Header Section -->
+    <div class="mb-8">
+     <h1 id="main-title" class="text-4xl font-bold gradient-text mb-2">Chennai Smart Water Monitoring</h1>
+     <p id="subtitle" class="text-gray-600 text-lg">Real-time Infrastructure Monitoring</p>
+    </div><!-- Summary Stats -->
+    <div id="summary" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8"></div><!-- City Map Section -->
+    <div class="content-card p-8 rounded-2xl mb-8">
+     <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <h2 id="map-title" class="text-2xl font-bold text-gray-800 flex items-center"><span class="text-3xl mr-3">🗺️</span> Chennai City Map</h2>
+      <div id="map-legend" class="flex items-center space-x-4 text-sm">
+       <div class="flex items-center"><span class="status-indicator bg-green-500"></span> <span class="text-gray-700 font-medium">Normal</span>
+       </div>
+       <div class="flex items-center"><span class="status-indicator bg-yellow-500"></span> <span class="text-gray-700 font-medium">Leak</span>
+       </div>
+       <div class="flex items-center"><span class="status-indicator bg-red-500"></span> <span class="text-gray-700 font-medium">Burst</span>
+       </div>
+      </div>
+     </div>
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div id="Anna Nagar" class="city-zone">
+       <div class="zone-label">
+        Anna Nagar
+       </div>
+       <div class="zone-status">
+        Monitoring...
+       </div>
+      </div>
+      <div id="T Nagar" class="city-zone">
+       <div class="zone-label">
+        T Nagar
+       </div>
+       <div class="zone-status">
+        Monitoring...
+       </div>
+      </div>
+      <div id="Velachery" class="city-zone">
+       <div class="zone-label">
+        Velachery
+       </div>
+       <div class="zone-status">
+        Monitoring...
+       </div>
+      </div>
+      <div id="Tambaram" class="city-zone">
+       <div class="zone-label">
+        Tambaram
+       </div>
+       <div class="zone-status">
+        Monitoring...
+       </div>
+      </div>
+     </div>
+    </div><!-- Chart Section -->
+    <div class="content-card p-8 rounded-2xl mb-8">
+     <h2 id="chart-title" class="text-2xl font-bold text-gray-800 mb-6 flex items-center"><span class="text-3xl mr-3">📊</span> Leak &amp; Burst History</h2>
+     <canvas id="historyChart"></canvas>
+    </div><!-- Risk Heatmap -->
+    <div class="content-card p-8 rounded-2xl mb-8">
+     <h2 id="heatmap-title" class="text-2xl font-bold text-gray-800 mb-6 flex items-center"><span class="text-3xl mr-3">��</span> Risk Heatmap</h2>
+     <div id="heatmap" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </div><!-- Incident Reports -->
+    <div class="content-card p-8 rounded-2xl mb-8">
+     <h2 id="reports-title" class="text-2xl font-bold text-gray-800 mb-6 flex items-center"><span class="text-3xl mr-3">📋</span> Incident Reports</h2>
+     <div id="reports-list"></div>
+    </div>
+   </main>
+  </div><!-- Report Modal -->
+  <div id="reportModal" class="modal-overlay hidden">
+   <div class="modal-content">
+    <div class="flex items-center justify-between mb-6">
+     <h3 id="modal-title" class="text-2xl font-bold text-gray-800">Create Incident Report</h3><button id="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg></button>
+    </div>
+    <div class="mb-6">
+     <p id="modal-area" class="text-lg font-semibold text-gray-700 mb-2"></p>
+     <p id="modal-type" class="text-red-600 font-bold text-xl"></p>
+    </div>
+    <form id="reportForm">
+     <div class="mb-4"><label for="description" class="block text-sm font-semibold text-gray-700 mb-2">Description</label> <textarea id="description" rows="4" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Describe the incident..."></textarea>
+     </div>
+     <div class="mb-6"><label for="severity" class="block text-sm font-semibold text-gray-700 mb-2">Severity</label> <select id="severity" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"> <option value="low">Low</option> <option value="medium">Medium</option> <option value="high" selected>High</option> <option value="critical">Critical</option> </select>
+     </div>
+     <div class="flex gap-3"><button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all"> Submit Report </button> <button type="button" id="cancelModal" class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors"> Cancel </button>
+     </div>
+    </form>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      main_title: "Chennai Smart Water Monitoring",
+      subtitle: "Real-time Infrastructure Monitoring",
+      map_title: "Chennai City Map",
+      chart_title: "Leak & Burst History",
+      heatmap_title: "Risk Heatmap",
+      language: "en"
+    };
+
+    // Language translations
+    const translations = {
+      en: {
+        main_title: "Chennai Smart Water Monitoring",
+        subtitle: "Real-time Infrastructure Monitoring",
+        map_title: "Chennai City Map",
+        chart_title: "Leak & Burst History",
+        heatmap_title: "Risk Heatmap",
+        total_zones: "Total Zones",
+        normal: "Normal",
+        leaks: "Leaks",
+        bursts: "Bursts",
+        avg_pressure: "Avg Pressure (PSI)",
+        burst_detected: "BURST DETECTED",
+        leak_detected: "Leak Detected",
+        all_normal: "All Systems Normal",
+        monitoring: "Monitoring...",
+        safe: "Safe",
+        medium: "Medium",
+        high: "High",
+        critical: "Critical",
+        risk: "Risk"
+      },
+      ta: {
+        main_title: "சென்னை நீர் கண்காணிப்பு",
+        subtitle: "நேரடி உள்கட்டமைப்பு கண்காணிப்பு",
+        map_title: "சென்னை நகர வரைபடம்",
+        chart_title: "கசிவு & வெடிப்பு வரலாறு",
+        heatmap_title: "ஆபத்து வெப்ப வரைபடம்",
+        total_zones: "மொத்த மண்டலங்கள்",
+        normal: "இயல்பான",
+        leaks: "கசிவுகள்",
+        bursts: "வெடிப்புகள்",
+        avg_pressure: "சராசரி அழுத்தம் (PSI)",
+        burst_detected: "வெடிப்பு கண்டறியப்பட்டது",
+        leak_detected: "கசிவு கண்டறியப்பட்டது",
+        all_normal: "அனைத்தும் இய��்பு",
+        monitoring: "கண்காணிப்பு...",
+        safe: "பாதுகாப்பான",
+        medium: "நடுத்தர",
+        high: "அதிக",
+        critical: "முக்கியமான",
+        risk: "ஆபத்து"
+      }
+    };
+
+    let currentLanguage = "en";
+
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+
+    // Language toggle
+    const langBtn = document.getElementById('langBtn');
+    const langText = document.getElementById('langText');
+    
+    if (langBtn && langText) {
+      langBtn.addEventListener('click', () => {
+        currentLanguage = currentLanguage === 'en' ? 'ta' : 'en';
+        langText.textContent = currentLanguage === 'en' ? 'EN' : 'த';
+        updateLanguage();
+        loadData(); // Reload data with new language
+      });
+    }
+
+    function updateLanguage() {
+      const t = translations[currentLanguage];
+      
+      const mainTitle = document.getElementById('main-title');
+      const subtitle = document.getElementById('subtitle');
+      const mapTitle = document.getElementById('map-title');
+      const chartTitle = document.getElementById('chart-title');
+      const heatmapTitle = document.getElementById('heatmap-title');
+      const mapLegend = document.getElementById('map-legend');
+
+      if (mainTitle) mainTitle.textContent = t.main_title;
+      if (subtitle) subtitle.textContent = t.subtitle;
+      if (mapTitle) mapTitle.innerHTML = `<span class="text-3xl mr-3">🗺️</span>${t.map_title}`;
+      if (chartTitle) chartTitle.innerHTML = `<span class="text-3xl mr-3">📊</span>${t.chart_title}`;
+      if (heatmapTitle) heatmapTitle.innerHTML = `<span class="text-3xl mr-3">🔥</span>${t.heatmap_title}`;
+      
+      if (mapLegend) {
+        mapLegend.innerHTML = `
+          <div class="flex items-center">
+            <span class="status-indicator bg-green-500"></span>
+            <span class="text-gray-700 font-medium">${t.normal}</span>
+          </div>
+          <div class="flex items-center">
+            <span class="status-indicator bg-yellow-500"></span>
+            <span class="text-gray-700 font-medium">${t.leaks}</span>
+          </div>
+          <div class="flex items-center">
+            <span class="status-indicator bg-red-500"></span>
+            <span class="text-gray-700 font-medium">${t.bursts}</span>
+          </div>
+        `;
+      }
+    }
+
+    // Chart variables
+    let chart;
+    let timeLabels = [];
+    let leakHistory = [];
+    let burstHistory = [];
+
+    // Simulated pipe data with sensors
+    const areas = [
+      { name: "Anna Nagar", pipeId: "P-1001", sensors: ["S-1001", "S-1002", "S-1003"] },
+      { name: "T Nagar", pipeId: "P-1002", sensors: ["S-1004", "S-1005", "S-1006"] },
+      { name: "Velachery", pipeId: "P-1003", sensors: ["S-1007", "S-1008", "S-1009"] },
+      { name: "Tambaram", pipeId: "P-1004", sensors: ["S-1010", "S-1011", "S-1012"] }
+    ];
+    
+    // Store incident reports and maintenance status
+    let incidentReports = [];
+    let maintenanceAreas = new Set();
+    let reportIdCounter = 0;
+    
+    function generateData() {
+      return areas.map((area, idx) => {
+        // If area is under maintenance, keep it as OK
+        if (maintenanceAreas.has(area.name)) {
+          return {
+            id: `pipe-${idx}`,
+            area: area.name,
+            pipeId: area.pipeId,
+            sensors: area.sensors,
+            status: "MAINTENANCE",
+            pressure: (50 + Math.random() * 50).toFixed(1),
+            flow: (100 + Math.random() * 100).toFixed(1),
+            affectedSensor: null
+          };
+        }
+        
+        const rand = Math.random();
+        let status = "OK";
+        let affectedSensor = null;
+        
+        if (rand < 0.1) {
+          status = "BURST";
+          affectedSensor = area.sensors[Math.floor(Math.random() * area.sensors.length)];
+        } else if (rand < 0.3) {
+          status = "LEAK";
+          affectedSensor = area.sensors[Math.floor(Math.random() * area.sensors.length)];
+        }
+        
+        return {
+          id: `pipe-${idx}`,
+          area: area.name,
+          pipeId: area.pipeId,
+          sensors: area.sensors,
+          status: status,
+          pressure: (50 + Math.random() * 50).toFixed(1),
+          flow: (100 + Math.random() * 100).toFixed(1),
+          affectedSensor: affectedSensor
+        };
+      });
+    }
+
+    function renderSummary(data) {
+      const t = translations[currentLanguage];
+      const total = data.length;
+      const ok = data.filter(p => p.status === "OK").length;
+      const leaks = data.filter(p => p.status === "LEAK").length;
+      const bursts = data.filter(p => p.status === "BURST").length;
+      const avgPressure = (data.reduce((sum, p) => sum + parseFloat(p.pressure), 0) / total).toFixed(1);
+
+      const summary = document.getElementById("summary");
+      summary.innerHTML = `
+        <div class="stat-card p-6 rounded-xl text-center">
+          <div class="text-4xl mb-2">💧</div>
+          <div class="text-3xl font-bold text-gray-800">${total}</div>
+          <div class="text-sm text-gray-600 mt-1 font-medium">${t.total_zones}</div>
+        </div>
+        <div class="stat-card p-6 rounded-xl text-center">
+          <div class="text-4xl mb-2">✅</div>
+          <div class="text-3xl font-bold text-green-600">${ok}</div>
+          <div class="text-sm text-gray-600 mt-1 font-medium">${t.normal}</div>
+        </div>
+        <div class="stat-card p-6 rounded-xl text-center">
+          <div class="text-4xl mb-2 ${leaks > 0 ? 'blink-indicator' : ''}">⚠️</div>
+          <div class="text-3xl font-bold text-yellow-600">${leaks}</div>
+          <div class="text-sm text-gray-600 mt-1 font-medium">${t.leaks}</div>
+        </div>
+        <div class="stat-card p-6 rounded-xl text-center">
+          <div class="text-4xl mb-2 ${bursts > 0 ? 'blink-indicator' : ''}">🚨</div>
+          <div class="text-3xl font-bold text-red-600">${bursts}</div>
+          <div class="text-sm text-gray-600 mt-1 font-medium">${t.bursts}</div>
+        </div>
+        <div class="stat-card p-6 rounded-xl text-center">
+          <div class="text-4xl mb-2">⚡</div>
+          <div class="text-3xl font-bold text-blue-600">${avgPressure}</div>
+          <div class="text-sm text-gray-600 mt-1 font-medium">${t.avg_pressure}</div>
+        </div>
+      `;
+    }
+
+    function updateCityMap(data) {
+      const t = translations[currentLanguage];
+      const areaData = {};
+
+      data.forEach(p => {
+        if (!areaData[p.area]) {
+          areaData[p.area] = {
+            statuses: [],
+            pipeId: p.pipeId,
+            sensors: p.sensors,
+            affectedSensor: p.affectedSensor
+          };
+        }
+        areaData[p.area].statuses.push(p.status);
+        if (p.affectedSensor) {
+          areaData[p.area].affectedSensor = p.affectedSensor;
+        }
+      });
+
+      for (const area in areaData) {
+        const box = document.getElementById(area);
+        if (!box) continue;
+        
+        box.className = "city-zone";
+        const statusDiv = box.querySelector('.zone-status');
+        const { statuses, pipeId, sensors, affectedSensor } = areaData[area];
+        
+        // Remove any existing report button and sensor info
+        const existingBtn = box.querySelector('.report-btn');
+        const existingSensorInfo = box.querySelector('.sensor-info');
+        if (existingBtn) existingBtn.remove();
+        if (existingSensorInfo) existingSensorInfo.remove();
+
+        // Add sensor info div
+        const sensorInfo = document.createElement('div');
+        sensorInfo.className = 'sensor-info';
+        sensorInfo.style.cssText = 'margin-top: 8px; font-size: 0.75rem; color: #6b7280; position: relative; z-index: 1;';
+        sensorInfo.innerHTML = `<div style="font-weight: 600;">Pipe: ${pipeId}</div><div>Sensors: ${sensors.length} active</div>`;
+
+        if (statuses.includes("MAINTENANCE")) {
+          box.classList.add("city-zone-maintenance");
+          statusDiv.textContent = `🔧 Under Maintenance`;
+          box.appendChild(sensorInfo);
+        } else if (statuses.includes("BURST")) {
+          box.classList.add("city-zone-danger");
+          statusDiv.innerHTML = `🚨 ${t.burst_detected}<br><span style="font-size: 0.75rem; color: #991b1b;">Sensor: ${affectedSensor}</span>`;
+          
+          // Add sensor details
+          sensorInfo.innerHTML = `<div style="font-weight: 600; color: #991b1b;">Pipe: ${pipeId}</div><div style="color: #991b1b;">Alert: ${affectedSensor}</div>`;
+          box.appendChild(sensorInfo);
+          
+          // Add report button
+          const reportBtn = document.createElement('button');
+          reportBtn.className = 'report-btn';
+          reportBtn.textContent = 'Create Report';
+          reportBtn.onclick = (e) => {
+            e.stopPropagation();
+            openReportModal(area, 'BURST', pipeId, affectedSensor);
+          };
+          box.appendChild(reportBtn);
+          
+        } else if (statuses.includes("LEAK")) {
+          box.classList.add("city-zone-warning");
+          statusDiv.innerHTML = `⚠️ ${t.leak_detected}<br><span style="font-size: 0.75rem; color: #92400e;">Sensor: ${affectedSensor}</span>`;
+          
+          // Add sensor details
+          sensorInfo.innerHTML = `<div style="font-weight: 600; color: #92400e;">Pipe: ${pipeId}</div><div style="color: #92400e;">Alert: ${affectedSensor}</div>`;
+          box.appendChild(sensorInfo);
+          
+          // Add report button
+          const reportBtn = document.createElement('button');
+          reportBtn.className = 'report-btn';
+          reportBtn.textContent = 'Create Report';
+          reportBtn.onclick = (e) => {
+            e.stopPropagation();
+            openReportModal(area, 'LEAK', pipeId, affectedSensor);
+          };
+          box.appendChild(reportBtn);
+          
+        } else {
+          box.classList.add("city-zone-ok");
+          statusDiv.textContent = `✅ ${t.all_normal}`;
+          box.appendChild(sensorInfo);
+        }
+      }
+    }
+
+    function updateChart(data) {
+      const leaks = data.filter(p => p.status === "LEAK").length;
+      const bursts = data.filter(p => p.status === "BURST").length;
+
+      const time = new Date().toLocaleTimeString();
+
+      timeLabels.push(time);
+      leakHistory.push(leaks);
+      burstHistory.push(bursts);
+
+      if (timeLabels.length > 10) {
+        timeLabels.shift();
+        leakHistory.shift();
+        burstHistory.shift();
+      }
+
+      if (!chart) {
+        const ctx = document.getElementById("historyChart");
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: timeLabels,
+            datasets: [
+              {
+                label: "Leaks",
+                data: leakHistory,
+                borderColor: "#f59e0b",
+                backgroundColor: "rgba(245, 158, 11, 0.1)",
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+              },
+              {
+                label: "Bursts",
+                data: burstHistory,
+                borderColor: "#ef4444",
+                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                labels: {
+                  color: '#374151',
+                  font: { size: 14, weight: '600' }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { color: '#6b7280' },
+                grid: { color: 'rgba(229, 231, 235, 0.5)' }
+              },
+              x: {
+                ticks: { color: '#6b7280' },
+                grid: { color: 'rgba(229, 231, 235, 0.5)' }
+              }
+            }
+          }
+        });
+      } else {
+        chart.update();
+      }
+    }
+
+    function updateHeatmap(data) {
+      const t = translations[currentLanguage];
+      const heat = {};
+      const pipeInfo = {};
+
+      data.forEach(p => {
+        if (!heat[p.area]) {
+          heat[p.area] = 0;
+          pipeInfo[p.area] = { pipeId: p.pipeId, sensorCount: p.sensors.length };
+        }
+        if (p.status === "LEAK") heat[p.area] += 1;
+        if (p.status === "BURST") heat[p.area] += 3;
+      });
+
+      const container = document.getElementById("heatmap");
+      container.innerHTML = "";
+
+      for (const area in heat) {
+        let colorClass = "heatmap-safe";
+        let riskLabel = t.safe;
+
+        if (heat[area] >= 3) {
+          colorClass = "heatmap-high";
+          riskLabel = t.critical;
+        } else if (heat[area] >= 2) {
+          colorClass = "heatmap-medium";
+          riskLabel = t.high;
+        } else if (heat[area] >= 1) {
+          colorClass = "heatmap-low";
+          riskLabel = t.medium;
+        }
+
+        container.innerHTML += `
+          <div class="heatmap-cell ${colorClass}">
+            <div class="text-lg font-bold">${area}</div>
+            <div class="text-xs opacity-80 mt-1">${pipeInfo[area].pipeId}</div>
+            <div class="text-2xl font-bold my-2">${heat[area]}</div>
+            <div class="text-sm opacity-90">${riskLabel} ${t.risk}</div>
+            <div class="text-xs opacity-80 mt-1">${pipeInfo[area].sensorCount} sensors</div>
+          </div>
+        `;
+      }
+    }
+
+    function loadData() {
+      const data = generateData();
+      renderSummary(data);
+      updateChart(data);
+      updateCityMap(data);
+      updateHeatmap(data);
+      renderReports();
+    }
+
+    // Modal and Report Functions
+    let currentReportArea = '';
+    let currentReportType = '';
+    let currentPipeId = '';
+    let currentSensorId = '';
+
+    function openReportModal(area, type, pipeId, sensorId) {
+      currentReportArea = area;
+      currentReportType = type;
+      currentPipeId = pipeId;
+      currentSensorId = sensorId;
+      
+      const modal = document.getElementById('reportModal');
+      const modalArea = document.getElementById('modal-area');
+      const modalType = document.getElementById('modal-type');
+      
+      modalArea.innerHTML = `
+        <div style="font-size: 1.125rem; font-weight: 600; color: #374151; margin-bottom: 4px;">Area: ${area}</div>
+        <div style="font-size: 0.875rem; color: #6b7280;">Pipe ID: ${pipeId} | Sensor: ${sensorId}</div>
+      `;
+      modalType.textContent = `${type === 'BURST' ? '🚨' : '⚠️'} ${type} DETECTED`;
+      
+      modal.classList.remove('hidden');
+    }
+
+    function closeReportModal() {
+      const modal = document.getElementById('reportModal');
+      modal.classList.add('hidden');
+      document.getElementById('reportForm').reset();
+    }
+
+    function submitReport(e) {
+      e.preventDefault();
+      
+      const description = document.getElementById('description').value;
+      const severity = document.getElementById('severity').value;
+      
+      const report = {
+        id: ++reportIdCounter,
+        area: currentReportArea,
+        type: currentReportType,
+        pipeId: currentPipeId,
+        sensorId: currentSensorId,
+        severity: severity,
+        description: description,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      incidentReports.push(report);
+      maintenanceAreas.add(currentReportArea);
+      
+      closeReportModal();
+      loadData();
+    }
+
+    function resolveReport(reportId) {
+      const report = incidentReports.find(r => r.id === reportId);
+      if (report) {
+        maintenanceAreas.delete(report.area);
+        incidentReports = incidentReports.filter(r => r.id !== reportId);
+        loadData();
+      }
+    }
+
+    function renderReports() {
+      const container = document.getElementById('reports-list');
+      
+      if (incidentReports.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <div class="text-6xl mb-4">✅</div>
+            <div class="text-xl font-semibold">No Active Incidents</div>
+            <div class="text-sm mt-2">All systems are operating normally</div>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = incidentReports.map(report => `
+        <div class="report-card">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <h3 class="text-lg font-bold text-gray-800">${report.area}</h3>
+              <p class="text-sm text-gray-600">${report.timestamp}</p>
+              <p class="text-xs text-gray-500 mt-1">Pipe: ${report.pipeId} | Sensor: ${report.sensorId}</p>
+            </div>
+            <span class="severity-badge severity-${report.severity}">${report.severity}</span>
+          </div>
+          
+          <div class="mb-3">
+            <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+              report.type === 'BURST' 
+                ? 'bg-red-100 text-red-700' 
+                : 'bg-yellow-100 text-yellow-700'
+            }">
+              ${report.type === 'BURST' ? '🚨' : '⚠️'} ${report.type}
+            </span>
+          </div>
+          
+          <p class="text-gray-700 mb-4">${report.description}</p>
+          
+          <button 
+            onclick="resolveReport(${report.id})" 
+            class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+            ✓ Resolve
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Modal Event Listeners
+    document.getElementById('closeModal').addEventListener('click', closeReportModal);
+    document.getElementById('cancelModal').addEventListener('click', closeReportModal);
+    document.getElementById('reportForm').addEventListener('submit', submitReport);
+    
+    document.getElementById('reportModal').addEventListener('click', (e) => {
+      if (e.target.id === 'reportModal') {
+        closeReportModal();
+      }
+    });
+
+    // Initial load
+    loadData();
+
+    // Auto-refresh every 10 seconds
+    setInterval(loadData, 10000);
+
+    // Element SDK Integration
+    async function onConfigChange(config) {
+      const mainTitle = document.getElementById('main-title');
+      const subtitle = document.getElementById('subtitle');
+      const mapTitle = document.getElementById('map-title');
+      const chartTitle = document.getElementById('chart-title');
+      const heatmapTitle = document.getElementById('heatmap-title');
+
+      if (mainTitle) mainTitle.textContent = config.main_title || defaultConfig.main_title;
+      if (subtitle) subtitle.textContent = config.subtitle || defaultConfig.subtitle;
+      if (mapTitle) mapTitle.innerHTML = `<span class="text-3xl mr-3">🗺️</span>${config.map_title || defaultConfig.map_title}`;
+      if (chartTitle) chartTitle.innerHTML = `<span class="text-3xl mr-3">📊</span>${config.chart_title || defaultConfig.chart_title}`;
+      if (heatmapTitle) heatmapTitle.innerHTML = `<span class="text-3xl mr-3">🔥</span>${config.heatmap_title || defaultConfig.heatmap_title}`;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ["main_title", config.main_title || defaultConfig.main_title],
+        ["subtitle", config.subtitle || defaultConfig.subtitle],
+        ["map_title", config.map_title || defaultConfig.map_title],
+        ["chart_title", config.chart_title || defaultConfig.chart_title],
+        ["heatmap_title", config.heatmap_title || defaultConfig.heatmap_title]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c004613471a79f4',t:'MTc2ODc2MjE4Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

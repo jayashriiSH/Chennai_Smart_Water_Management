@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chennai Water Supply Dashboard</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .dashboard-bg {
+      background: linear-gradient(to bottom right, #f8fafc 0%, #ffffff 50%, #eff6ff 100%);
+    }
+
+    .wave-gradient {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 25%, #0369a1 50%, #075985 75%, #0c4a6e 100%);
+    }
+
+    .nav-link {
+      color: #4b5563;
+      transition: color 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: #0284c7;
+    }
+
+    .nav-link.active {
+      color: #0284c7;
+      font-weight: 600;
+    }
+
+    .glass-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .zone-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .zone-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .zone-card:hover::before {
+      width: 6px;
+    }
+
+    .zone-card-normal::before {
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    }
+
+    .zone-card-stress::before {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .zone-card-critical::before {
+      background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .metric-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-normal {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      color: #065f46;
+    }
+
+    .status-stress {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e;
+    }
+
+    .status-critical {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #991b1b;
+    }
+
+    .year-select {
+      background: white;
+      border: 2px solid #e5e7eb;
+      transition: all 0.3s ease;
+    }
+
+    .year-select:hover {
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    .year-select:focus {
+      outline: none;
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+    }
+
+    .iframe-container {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid #e5e7eb;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 24px;
+      margin: 0 auto 12px;
+    }
+
+    .icon-demand {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    }
+
+    .icon-supply {
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    }
+
+    .icon-usage {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    }
+
+    .icon-coverage {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    }
+
+    .icon-pressure {
+      background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .prediction-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%);
+      color: #6b21a8;
+      margin-left: 8px;
+    }
+
+    .future-indicator {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    iframe {
+      width: 100%;
+      min-height: 600px;
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full dashboard-bg overflow-auto">
+  <div class="min-h-full w-full"><!-- NAVBAR -->
+   <nav class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+     <div class="flex items-center justify-between h-20"><!-- Logo -->
+      <div class="flex items-center gap-2">
+       <svg class="w-10 h-10" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#logoGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#0369a1;stop-opacity:1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">AquaFlow</span>
+      </div><!-- Desktop Navigation -->
+      <div class="hidden lg:flex items-center gap-8"><a href="heropage.html" class="nav-link">Home</a> <a href="home.html" class="nav-link">About</a> <a href="water_monitor.html" class="nav-link active">Water Monitoring</a> <a href="test2.html" class="nav-link">Leak Detection</a> <a href="groundwater.html" class="nav-link">Ground water</a> <a href=waterscar.html#" class="nav-link">Dashboard</a> <a href="#" class="nav-link">Contact</a>
+      </div><!-- Right Side -->
+      <div class="flex items-center gap-4"><button id="langBtn" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+        </svg><span id="langText" class="hidden md:inline font-medium">EN</span> </button> <button class="hidden md:block px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"> Login </button> <!-- Mobile Menu Button --> <button id="menuBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg></button>
+      </div>
+     </div>
+    </div><!-- Mobile Menu -->
+    <div id="mobileMenu" class="lg:hidden hidden bg-white border-t border-gray-100">
+     <div class="flex flex-col px-6 py-4 gap-4"><a href="#" class="nav-link">Home</a> <a href="#" class="nav-link">About</a> <a href="#" class="nav-link active">Water Monitoring</a> <a href="#" class="nav-link">Leak Detection</a> <a href="#" class="nav-link">Water Quality</a> <a href="#" class="nav-link">Dashboard</a> <a href="#" class="nav-link">Contact</a>
+     </div>
+    </div>
+   </nav><!-- HEADER SECTION -->
+   <section class="wave-gradient py-20 lg:py-28 text-center relative overflow-hidden"><!-- Decorative elements -->
+    <div class="absolute inset-0 opacity-10">
+     <svg class="absolute top-10 left-10 w-32 h-32" viewbox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="white" opacity="0.3" />
+     </svg>
+     <svg class="absolute bottom-10 right-10 w-40 h-40" viewbox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="white" opacity="0.2" />
+     </svg>
+    </div>
+    <div class="max-w-4xl mx-auto px-6 relative z-10">
+     <h1 id="main-title" class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">Chennai Water Supply Dashboard</h1>
+     <p id="subtitle" class="text-xl md:text-2xl text-blue-100 mb-8">Real-time monitoring and analytics for water distribution</p>
+     <div class="flex items-center justify-center gap-4 flex-wrap"><select id="yearSelect" class="year-select px-6 py-3 rounded-lg font-semibold text-gray-700 cursor-pointer text-lg"> <option value="">Select Year</option> </select>
+     </div>
+    </div>
+   </section><!-- MAIN CONTENT -->
+   <main class="max-w-7xl mx-auto px-6 py-12 -mt-16 relative z-10">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><!-- LEFT COLUMN -->
+     <div class="lg:col-span-2 space-y-6"><!-- ZONE CARDS -->
+      <div class="glass-card p-8">
+       <div class="flex items-center justify-between mb-6 flex-wrap gap-4">
+        <h2 id="zone-title" class="text-2xl font-bold text-gray-800 flex items-center"><span class="text-3xl mr-3">🏘️</span> Water Supply Zones</h2>
+        <div id="year-badge"></div>
+       </div>
+       <div id="zoneCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div><!-- TREND CHART -->
+      <div class="glass-card p-8">
+       <h2 id="trend-chart-title" class="text-2xl font-bold text-gray-800 mb-6 flex items-center"><span class="text-3xl mr-3">📈</span> Water Supply Trends (2020-2027)</h2>
+       <div class="chart-container" style="height: 350px;">
+        <canvas id="trendChart"></canvas>
+       </div>
+      </div><!-- DATA VIEWER -->
+      <div class="glass-card p-8">
+       <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center"><span class="text-3xl mr-3">📊</span> <span id="data-viewer-title">GCC Ward Information</span></h2>
+       <div class="iframe-container"><iframe title="Data viewer" width="100%" height="500" src="https://data.opencity.in/dataset/gcc-ward-information/resource/00b3ea2e-e3a4-4b28-aec2-769a01404e5b/view/e462f2f2-6273-492d-b42e-758cef763051" frameborder="0" loading="lazy"> </iframe>
+       </div>
+      </div>
+     </div><!-- RIGHT COLUMN -->
+     <div class="space-y-6"><!-- STATUS PIE CHART -->
+      <div class="glass-card p-6">
+       <h3 id="status-chart-title" class="text-xl font-bold text-gray-800 mb-4">Zone Status Distribution</h3>
+       <div class="chart-container" style="height: 250px;">
+        <canvas id="statusChart"></canvas>
+       </div>
+      </div><!-- SUMMARY STATS -->
+      <div class="glass-card p-6">
+       <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><span class="text-2xl mr-2">📋</span> <span id="summary-title">Summary Statistics</span></h3>
+       <div id="summaryStats" class="space-y-3"></div>
+      </div><!-- PREDICTION INFO -->
+      <div class="glass-card p-6" id="prediction-info">
+       <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><span class="text-2xl mr-2">🔮</span> <span id="prediction-title">Future Prediction</span></h3>
+       <div class="space-y-3">
+        <div class="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
+         <p id="prediction-text" class="text-sm text-gray-700 leading-relaxed">Based on infrastructure improvements and demand management, Chennai is projected to achieve near-optimal water supply across all zones by 2027, with enhanced coverage and pressure stability.</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main>
+  </div>
+  <script>
+    const defaultConfig = {
+      main_title: "Chennai Water Supply Dashboard",
+      subtitle: "Real-time monitoring and analytics for water distribution",
+      zone_title: "Water Supply Zones",
+      status_chart_title: "Zone Status Distribution",
+      trend_chart_title: "Water Supply Trends (2020-2027)"
+    };
+
+    // Language translations
+    const translations = {
+      en: {
+        main_title: "Chennai Water Supply Dashboard",
+        subtitle: "Real-time monitoring and analytics for water distribution",
+        zone_title: "Water Supply Zones",
+        status_chart_title: "Zone Status Distribution",
+        trend_chart_title: "Water Supply Trends (2020-2027)",
+        summary_title: "Summary Statistics",
+        data_viewer_title: "GCC Ward Information",
+        prediction_title: "Future Prediction",
+        select_year: "Select Year",
+        demand: "Demand",
+        supply: "Supply",
+        usage: "Usage",
+        coverage: "Coverage",
+        pressure: "Pressure",
+        status: "Status",
+        normal: "Normal",
+        stress: "Stress",
+        critical: "Critical",
+        total_zones: "Total Zones",
+        avg_supply: "Avg Supply",
+        avg_usage: "Avg Usage",
+        mld: "MLD",
+        predicted: "Predicted",
+        historical: "Historical Data",
+        prediction_2027: "Based on infrastructure improvements and demand management, Chennai is projected to achieve near-optimal water supply across all zones by 2027, with enhanced coverage and pressure stability.",
+        future_data: "🔮 Future Projection"
+      },
+      ta: {
+        main_title: "சென்னை நீர் வழங்கல் பலகை",
+        subtitle: "நீர் விநியோகத்திற்கான நேரடி கண்காணிப்பு மற்றும் பகுப்பாய்வு",
+        zone_title: "நீர் வழங்கல் மண்டலங்கள்",
+        status_chart_title: "மண்டல நிலை பகிர்வு",
+        trend_chart_title: "நீர் வழங்கல் போக்க���கள் (2020-2027)",
+        summary_title: "சுருக்க புள்ளிவிவரங்கள்",
+        data_viewer_title: "GCC வார்டு தகவல்",
+        prediction_title: "எதிர்கால கணிப்பு",
+        select_year: "ஆண்டு �����ேர்வு",
+        demand: "தேவை",
+        supply: "வழங்கல்",
+        usage: "பயன்பாடு",
+        coverage: "கவரேஜ்",
+        pressure: "அழுத்தம்",
+        status: "நிலை",
+        normal: "இயல்பான",
+        stress: "அழுத்தம்",
+        critical: "முக்கியமான",
+        total_zones: "மொத்த மண்டலங்கள்",
+        avg_supply: "சராசரி வழங்கல்",
+        avg_usage: "சராசரி பயன்பாடு",
+        mld: "MLD",
+        predicted: "கணிக்கப���பட்டது",
+        historical: "வரலாற்று தரவு",
+        prediction_2027: "உள்கட்டமைப்பு மே��்பாடுகள் மற்றும் தேவை மேலாண்மையின் அடிப்படையில், 2027 ஆம் ஆண்டுக்குள் சென்னை அனைத்து மண்டலங்களிலும் சிறந்த நீர் வழங்கலை அடைய உள்ளது.",
+        future_data: "🔮 எதிர்கால கணிப்பு"
+      }
+    };
+
+    let currentLanguage = "en";
+
+    // Sample CSV data embedded with years 2020-2027
+    const csvData = `year,zone,supply,usage,coverage,pressure,demand,status
+2020,Anna Nagar,85,78,92,65,90,Normal
+2020,T Nagar,72,68,88,58,75,Stress
+2020,Velachery,95,88,95,70,98,Normal
+2020,Tambaram,65,62,85,55,70,Stress
+2020,Adyar,88,82,90,68,92,Normal
+2020,Mylapore,70,65,87,60,72,Stress
+2021,Anna Nagar,88,80,93,68,92,Normal
+2021,T Nagar,68,65,85,55,72,Critical
+2021,Velachery,92,85,94,68,95,Normal
+2021,Tambaram,62,58,82,52,68,Critical
+2021,Adyar,85,78,89,65,88,Normal
+2021,Mylapore,72,68,88,62,75,Stress
+2022,Anna Nagar,90,82,94,70,94,Normal
+2022,T Nagar,75,70,89,60,78,Stress
+2022,Velachery,98,90,96,72,100,Normal
+2022,Tambaram,68,64,86,58,72,Stress
+2022,Adyar,92,85,92,70,95,Normal
+2022,Mylapore,78,72,90,65,80,Normal
+2023,Anna Nagar,92,85,95,72,96,Normal
+2023,T Nagar,80,75,91,65,82,Normal
+2023,Velachery,100,92,97,75,102,Normal
+2023,Tambaram,72,68,88,62,75,Stress
+2023,Adyar,95,88,94,72,98,Normal
+2023,Mylapore,82,78,92,68,85,Normal
+2024,Anna Nagar,95,88,96,75,98,Normal
+2024,T Nagar,85,80,93,68,88,Normal
+2024,Velachery,105,95,98,78,108,Normal
+2024,Tambaram,75,70,90,65,78,Normal
+2024,Adyar,98,90,95,75,100,Normal
+2024,Mylapore,88,82,94,70,90,Normal
+2025,Anna Nagar,98,90,97,78,100,Normal
+2025,T Nagar,88,82,94,70,90,Normal
+2025,Velachery,108,98,98,80,110,Normal
+2025,Tambaram,78,72,92,68,80,Stress
+2025,Adyar,100,92,96,78,102,Normal
+2025,Mylapore,90,85,95,72,92,Normal
+2026,Anna Nagar,100,92,98,80,102,Normal
+2026,T Nagar,90,85,95,72,92,Normal
+2026,Velachery,110,100,99,82,112,Normal
+2026,Tambaram,80,75,93,70,82,Normal
+2026,Adyar,102,95,97,80,105,Normal
+2026,Mylapore,92,88,96,75,95,Normal
+2027,Anna Nagar,105,95,98,82,108,Normal
+2027,T Nagar,95,88,96,75,98,Normal
+2027,Velachery,115,105,99,85,118,Normal
+2027,Tambaram,85,80,95,72,88,Normal
+2027,Adyar,108,98,98,82,110,Normal
+2027,Mylapore,98,90,97,78,100,Normal`;
+
+    let allData = [];
+    let statusChart;
+    let trendChart;
+
+    // Parse CSV data
+    function parseCSV() {
+      const rows = csvData.trim().split("\n").slice(1);
+      allData = rows.map(r => {
+        const [year, zone, supply, usage, coverage, pressure, demand, status] = r.split(",");
+        return {
+          year: year.trim(),
+          zone: zone.trim(),
+          supply: parseFloat(supply),
+          usage: parseFloat(usage),
+          coverage: parseFloat(coverage),
+          pressure: parseFloat(pressure),
+          demand: parseFloat(demand),
+          status: status.trim()
+        };
+      });
+    }
+
+    // Load years into dropdown
+    function loadYears() {
+      const years = [...new Set(allData.map(d => d.year))].sort();
+      const select = document.getElementById("yearSelect");
+      const t = translations[currentLanguage];
+      
+      select.innerHTML = `<option value="">${t.select_year}</option>`;
+      
+      years.forEach(y => {
+        const opt = document.createElement("option");
+        opt.value = y;
+        const isFuture = parseInt(y) >= 2027;
+        opt.textContent = y + (isFuture ? ' 🔮' : '');
+        select.appendChild(opt);
+      });
+
+      if (years.length > 0) {
+        select.value = years[years.length - 1];
+        updateDashboard(select.value);
+      }
+
+      select.addEventListener("change", () => {
+        updateDashboard(select.value);
+      });
+    }
+
+    // Update dashboard based on selected year
+    function updateDashboard(year) {
+      if (!year) return;
+      
+      const yearData = allData.filter(d => d.year === year);
+      const isFuture = parseInt(year) >= 2027;
+      
+      renderZoneCards(yearData, isFuture);
+      renderStatusChart(yearData);
+      renderTrendChart(year);
+      renderSummary(yearData);
+      renderYearBadge(year, isFuture);
+      renderPredictionInfo(year, isFuture);
+    }
+
+    // Render year badge
+    function renderYearBadge(year, isFuture) {
+      const t = translations[currentLanguage];
+      const badge = document.getElementById('year-badge');
+      
+      if (isFuture) {
+        badge.innerHTML = `<span class="prediction-badge">${t.future_data}</span>`;
+      } else {
+        badge.innerHTML = '';
+      }
+    }
+
+    // Render prediction info
+    function renderPredictionInfo(year, isFuture) {
+      const t = translations[currentLanguage];
+      const predictionDiv = document.getElementById('prediction-info');
+      const predictionText = document.getElementById('prediction-text');
+      const predictionTitle = document.getElementById('prediction-title');
+      
+      if (predictionTitle) predictionTitle.textContent = t.prediction_title;
+      
+      if (isFuture) {
+        predictionDiv.style.display = 'block';
+        if (predictionText) predictionText.textContent = t.prediction_2027;
+      } else {
+        predictionDiv.style.display = 'none';
+      }
+    }
+
+    // Render zone cards
+    function renderZoneCards(data, isFuture) {
+      const t = translations[currentLanguage];
+      const container = document.getElementById("zoneCards");
+      container.innerHTML = "";
+
+      data.forEach(z => {
+        const statusClass = 
+          z.status === "Normal" ? "zone-card-normal" :
+          z.status === "Stress" ? "zone-card-stress" : "zone-card-critical";
+
+        const statusBadgeClass =
+          z.status === "Normal" ? "status-normal" :
+          z.status === "Stress" ? "status-stress" : "status-critical";
+
+        const card = document.createElement("div");
+        card.className = `zone-card ${statusClass} bg-white rounded-xl p-5 shadow-md fade-in`;
+        card.innerHTML = `
+          ${isFuture ? `<div class="future-indicator">${t.predicted}</div>` : ''}
+          <div class="flex justify-between items-start mb-4">
+            <h3 class="text-xl font-bold text-gray-800">${z.zone}</h3>
+            <span class="status-badge ${statusBadgeClass}">${t[z.status.toLowerCase()]}</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="metric-card">
+              <div class="metric-icon icon-demand">💧</div>
+              <p class="text-2xl font-bold text-gray-800">${z.demand}</p>
+              <p class="text-xs text-gray-600 mt-1">${t.demand} (${t.mld})</p>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon icon-supply">🚰</div>
+              <p class="text-2xl font-bold text-gray-800">${z.supply}</p>
+              <p class="text-xs text-gray-600 mt-1">${t.supply} (${t.mld})</p>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon icon-usage">📊</div>
+              <p class="text-2xl font-bold text-gray-800">${z.usage}</p>
+              <p class="text-xs text-gray-600 mt-1">${t.usage} (${t.mld})</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="text-center p-3 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg">
+              <p class="text-lg font-bold text-blue-700">${z.coverage}%</p>
+              <p class="text-xs text-gray-600">${t.coverage}</p>
+            </div>
+            <div class="text-center p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg">
+              <p class="text-lg font-bold text-purple-700">${z.pressure} PSI</p>
+              <p class="text-xs text-gray-600">${t.pressure}</p>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Render status pie chart
+    function renderStatusChart(data) {
+      const t = translations[currentLanguage];
+      const count = { Normal: 0, Stress: 0, Critical: 0 };
+      
+      data.forEach(d => count[d.status]++);
+
+      if (statusChart) statusChart.destroy();
+
+      statusChart = new Chart(document.getElementById("statusChart"), {
+        type: "doughnut",
+        data: {
+          labels: [t.normal, t.stress, t.critical],
+          datasets: [{
+            data: [count.Normal, count.Stress, count.Critical],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(245, 158, 11, 0.8)',
+              'rgba(239, 68, 68, 0.8)'
+            ],
+            borderWidth: 3,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 15,
+                font: { size: 13, weight: '600', family: 'Inter' }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Render trend line chart with future predictions highlighted
+    function renderTrendChart(selectedYear) {
+      const t = translations[currentLanguage];
+      const years = [...new Set(allData.map(d => d.year))].sort();
+      
+      const zones = [...new Set(allData.map(d => d.zone))];
+      const datasets = zones.map((zone, idx) => {
+        const colors = [
+          '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
+        ];
+        
+        return {
+          label: zone,
+          data: years.map(year => {
+            const record = allData.find(d => d.year === year && d.zone === zone);
+            return record ? record.supply : 0;
+          }),
+          borderColor: colors[idx % colors.length],
+          backgroundColor: colors[idx % colors.length] + '20',
+          borderWidth: 3,
+          tension: 0.4,
+          fill: true,
+          segment: {
+            borderDash: ctx => {
+              const year = years[ctx.p0DataIndex];
+              return parseInt(year) >= 2027 ? [5, 5] : [];
+            }
+          }
+        };
+      });
+
+      if (trendChart) trendChart.destroy();
+
+      trendChart = new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+          labels: years,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 10,
+                font: { size: 12, weight: '600', family: 'Inter' },
+                usePointStyle: true
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  const year = context.label;
+                  const isFuture = parseInt(year) >= 2027;
+                  const label = context.dataset.label + ': ' + context.parsed.y + ' MLD';
+                  return isFuture ? label + ' (Predicted)' : label;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(0, 0, 0, 0.05)' },
+              ticks: { font: { family: 'Inter' } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { 
+                font: { family: 'Inter' },
+                callback: function(value, index) {
+                  const year = this.getLabelForValue(value);
+                  return parseInt(year) >= 2027 ? year + ' 🔮' : year;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Render summary statistics
+    function renderSummary(data) {
+      const t = translations[currentLanguage];
+      const container = document.getElementById("summaryStats");
+      
+      const totalZones = data.length;
+      const avgSupply = (data.reduce((sum, d) => sum + d.supply, 0) / totalZones).toFixed(1);
+      const avgUsage = (data.reduce((sum, d) => sum + d.usage, 0) / totalZones).toFixed(1);
+      const normalZones = data.filter(d => d.status === "Normal").length;
+      
+      container.innerHTML = `
+        <div class="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-700 font-semibold">${t.total_zones}</span>
+            <span class="text-2xl font-bold text-blue-700">${totalZones}</span>
+          </div>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-700 font-semibold">${t.normal}</span>
+            <span class="text-2xl font-bold text-green-700">${normalZones}</span>
+          </div>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-700 font-semibold">${t.avg_supply}</span>
+            <span class="text-2xl font-bold text-purple-700">${avgSupply}</span>
+          </div>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-700 font-semibold">${t.avg_usage}</span>
+            <span class="text-2xl font-bold text-orange-700">${avgUsage}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+
+    // Language toggle
+    const langBtn = document.getElementById('langBtn');
+    const langText = document.getElementById('langText');
+    
+    if (langBtn && langText) {
+      langBtn.addEventListener('click', () => {
+        currentLanguage = currentLanguage === 'en' ? 'ta' : 'en';
+        langText.textContent = currentLanguage === 'en' ? 'EN' : 'த';
+        updateLanguage();
+        const currentYear = document.getElementById("yearSelect").value;
+        if (currentYear) {
+          loadYears();
+          updateDashboard(currentYear);
+        }
+      });
+    }
+
+    function updateLanguage() {
+      const t = translations[currentLanguage];
+      
+      document.getElementById('main-title').textContent = t.main_title;
+      document.getElementById('subtitle').textContent = t.subtitle;
+      document.getElementById('zone-title').innerHTML = `<span class="text-3xl mr-3">🏘️</span>${t.zone_title}`;
+      document.getElementById('status-chart-title').textContent = t.status_chart_title;
+      document.getElementById('trend-chart-title').innerHTML = `<span class="text-3xl mr-3">📈</span>${t.trend_chart_title}`;
+      document.getElementById('summary-title').textContent = t.summary_title;
+      document.getElementById('data-viewer-title').textContent = t.data_viewer_title;
+    }
+
+    // Initialize
+    parseCSV();
+    loadYears();
+
+    // Element SDK Integration
+    async function onConfigChange(config) {
+      const mainTitle = document.getElementById('main-title');
+      const subtitle = document.getElementById('subtitle');
+      const zoneTitle = document.getElementById('zone-title');
+      const statusChartTitle = document.getElementById('status-chart-title');
+      const trendChartTitle = document.getElementById('trend-chart-title');
+
+      if (mainTitle) mainTitle.textContent = config.main_title || defaultConfig.main_title;
+      if (subtitle) subtitle.textContent = config.subtitle || defaultConfig.subtitle;
+      if (zoneTitle) zoneTitle.innerHTML = `<span class="text-3xl mr-3">🏘️</span>${config.zone_title || defaultConfig.zone_title}`;
+      if (statusChartTitle) statusChartTitle.textContent = config.status_chart_title || defaultConfig.status_chart_title;
+      if (trendChartTitle) trendChartTitle.innerHTML = `<span class="text-3xl mr-3">📈</span>${config.trend_chart_title || defaultConfig.trend_chart_title}`;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ["main_title", config.main_title || defaultConfig.main_title],
+        ["subtitle", config.subtitle || defaultConfig.subtitle],
+        ["zone_title", config.zone_title || defaultConfig.zone_title],
+        ["status_chart_title", config.status_chart_title || defaultConfig.status_chart_title],
+        ["trend_chart_title", config.trend_chart_title || defaultConfig.trend_chart_title]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c083a5c132247c5',t:'MTc2ODg0NTU4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

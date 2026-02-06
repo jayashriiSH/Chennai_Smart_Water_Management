@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chennai Water Intelligence Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-slate-100">
+
+<!-- HEADER -->
+<div class="bg-white shadow p-6 flex justify-between items-center">
+  <h1 class="text-2xl font-bold">💧 Chennai Water Dashboard</h1>
+
+  <select id="yearSelect"
+    class="border px-4 py-2 rounded-lg text-sm">
+  </select>
+</div>
+
+<!-- MAIN -->
+<div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- LEFT -->
+  <div class="lg:col-span-2 space-y-6">
+
+    <!-- ZONE CARDS -->
+    <div id="zoneCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="bg-white rounded-xl p-6 shadow">
+    <h3 class="font-semibold mb-4">Zone Status Distribution</h3>
+    <canvas id="statusChart"></canvas>
+    
+  </div>
+
+</div>
+
+<script>
+
+let allData = [];
+let chart;
+
+fetch("data.csv")
+  .then(res => res.text())
+  .then(text => {
+    const rows = text.trim().split("\n").slice(1);
+    allData = rows.map(r => {
+      const [year,zone,supply,usage,coverage,pressure,demand,status] = r.split(",");
+      return {
+        year,
+        zone,
+        supply,
+        usage,
+        coverage,
+        pressure,
+        demand,
+        status
+      };
+    });
+
+    loadYears();
+    updateDashboard(document.getElementById("yearSelect").value);
+  });
+
+function loadYears() {
+  const years = [...new Set(allData.map(d => d.year))];
+  const select = document.getElementById("yearSelect");
+
+  years.forEach(y => {
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener("change", () => {
+    updateDashboard(select.value);
+  });
+}
+
+function updateDashboard(year) {
+  const yearData = allData.filter(d => d.year === year);
+
+  // CARDS
+  const container = document.getElementById("zoneCards");
+  container.innerHTML = "";
+
+  yearData.forEach(z => {
+    let color =
+      z.status === "Normal" ? "green" :
+      z.status === "Stress" ? "yellow" : "red";
+
+    container.innerHTML += `
+      <div class="bg-white p-5 rounded-xl shadow border-l-4 border-${color}-500">
+        <h3 class="font-semibold">${z.zone}</h3>
+        <p class="text-sm text-gray-500 mb-3">Status: ${z.status}</p>
+
+        <div class="grid grid-cols-3 text-sm text-center">
+          <div>
+            <p class="font-bold">${z.demand}</p>
+            <p class="text-gray-500">Demand</p>
+          </div>
+          <div>
+            <p class="font-bold">${z.supply}</p>
+            <p class="text-gray-500">Supply</p>
+          </div>
+          <div>
+            <p class="font-bold">${z.usage}</p>
+            <p class="text-gray-500">Usage</p>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  drawPie(yearData);
+}
+
+function drawPie(data) {
+  const count = { Normal: 0, Stress: 0, "Extreme Heat": 0 };
+
+  data.forEach(d => count[d.status]++);
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("statusChart"), {
+    type: "pie",
+    data: {
+      labels: Object.keys(count),
+      datasets: [{
+        data: Object.values(count)
+      }]
+    }
+  });
+}
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservoir Forecast Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .nav-link {
+      color: #4b5563;
+      transition: color 0.3s ease;
+    }
+    
+    .nav-link:hover {
+      color: #0284c7;
+    }
+    
+    .nav-link.active {
+      color: #0284c7;
+      font-weight: 600;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 400px;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-50 via-cyan-50/30 to-blue-100/50 overflow-auto">
+  <div class="min-h-full w-full"><!-- NAVBAR -->
+   <nav class="bg-white/90 backdrop-blur-md border-b border-gray-100/50 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+     <div class="flex items-center justify-between h-20"><!-- Logo -->
+      <div class="flex items-center gap-2">
+       <svg class="w-10 h-10" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#logoGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#06b6d4" />
+          <stop offset="100%" style="stop-color:#0369a1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">AquaFlow</span>
+      </div><!-- Desktop Menu -->
+      <div class="hidden lg:flex items-center gap-8"><a href="heropage.html" class="nav-link">Home</a> <a href="home.html" class="nav-link">About</a> <a href="water_monitor.html" class="nav-link">Water Monitoring</a> <a href="link.html" class="nav-link">Leak Detection</a> <a href="#" class="nav-link">Groundwater</a> <a href="waterscar.html" class="nav-link">Dashboard</a> <a href="#" class="nav-link active">Reservoir</a>
+      </div><!-- Right Side -->
+      <div class="flex items-center gap-4"><button id="langBtn" class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+        </svg><span class="hidden md:inline font-medium">EN</span> </button> <button class="hidden md:block px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"> Login </button> <!-- Mobile Menu Button --> <button id="menuBtn" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg></button>
+      </div>
+     </div>
+    </div><!-- Mobile Menu -->
+    <div id="mobileMenu" class="lg:hidden hidden bg-white border-t border-gray-100 px-6 py-4">
+     <div class="flex flex-col gap-3"><a href="#" class="nav-link py-2">Home</a> <a href="#" class="nav-link py-2">About</a> <a href="#" class="nav-link py-2">Water Monitoring</a> <a href="#" class="nav-link py-2">Leak Detection</a> <a href="#" class="nav-link py-2">Groundwater</a> <a href="waterscar.html" class="nav-link py-2">Dashboard</a> <a href="#" class="nav-link active py-2">Reservoir</a> <button class="mt-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold"> Login </button>
+     </div>
+    </div>
+   </nav><!-- Main Content -->
+   <main class="max-w-7xl mx-auto px-6 lg:px-8 py-8"><!-- Header -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+     <h1 id="pageTitle" class="text-4xl font-bold text-gray-900">🌊 Reservoir-wise Inflow &amp; Outflow Forecast</h1><button onclick="openFullDashboard()" class="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all whitespace-nowrap"> View Full Dashboard </button>
+    </div><!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"><!-- Left Panel - Controls -->
+     <div class="lg:col-span-1 space-y-6"><!-- Reservoir Selection Card -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200"><label class="block text-sm font-medium text-gray-700 mb-2">Select Reservoir</label> <select id="reservoirSelect" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"> <option value="poondi">Poondi</option> <option value="redhills">Red Hills</option> <option value="cholavaram">Cholavaram</option> <option value="chembarambakkam">Chembarambakkam</option> </select>
+      </div><!-- Year Selection Card -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200"><label class="block text-sm font-medium text-gray-700 mb-2">Year</label> <select id="yearSelect" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"> <option value="2025">2025</option> <option value="2026">2026</option> <option value="2027">2027</option> <option value="2028">2028</option> </select>
+      </div><!-- Month Selection Card -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200"><label class="block text-sm font-medium text-gray-700 mb-2">Month</label> <select id="monthSelect" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"> <option value="0">January</option> <option value="1">February</option> <option value="2">March</option> <option value="3">April</option> <option value="4">May</option> <option value="5">June</option> <option value="6">July</option> <option value="7">August</option> <option value="8">September</option> <option value="9">October</option> <option value="10">November</option> <option value="11">December</option> </select>
+      </div><!-- Prediction Results -->
+      <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-200 space-y-4">
+       <div class="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-5 border border-cyan-100">
+        <p class="text-sm font-semibold text-cyan-700 mb-1">Predicted Inflow</p>
+        <p id="inflowValue" class="text-4xl font-bold text-cyan-900">48</p>
+       </div>
+       <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
+        <p class="text-sm font-semibold text-blue-700 mb-1">Predicted Outflow</p>
+        <p id="outflowValue" class="text-4xl font-bold text-blue-900">90</p>
+       </div>
+      </div>
+     </div><!-- Right Panel - Chart -->
+     <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl p-6 lg:p-8 shadow-sm border border-gray-200">
+       <h2 id="chartTitle" class="text-xl font-semibold text-gray-800 mb-6">📈 Monthly Forecast</h2>
+       <div class="chart-container">
+        <canvas id="forecastChart"></canvas>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="bg-white border-t border-gray-100 mt-12">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+     <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+       <svg class="w-8 h-8" viewbox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" fill="url(#footerGrad)" /> <path d="M20 10 L20 30 M14 16 Q20 22 26 16" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none" /> <defs>
+         <lineargradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#06b6d4" />
+          <stop offset="100%" style="stop-color:#0369a1" />
+         </lineargradient>
+        </defs>
+       </svg><span class="text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">AquaFlow</span>
+      </div>
+      <p class="text-gray-500 text-sm">© 2024 AquaFlow Chennai. All rights reserved.</p>
+      <div class="flex items-center gap-4"><a href="#" class="text-gray-400 hover:text-blue-600 transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+        </svg></a> <a href="#" class="text-gray-400 hover:text-blue-600 transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+        </svg></a>
+      </div>
+     </div>
+    </div>
+   </footer>
+  </div>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      page_title: "🌊 Reservoir-wise Inflow & Outflow Forecast",
+      chart_title: "📈 Monthly Forecast",
+      background_color: "#f8fafc",
+      primary_color: "#0ea5e9",
+      secondary_color: "#3b82f6"
+    };
+    
+    let config = { ...defaultConfig };
+    
+    // Sample data structure
+    const reservoirData = {
+      poondi: {
+        2025: {
+          inflow: [48, 52, 145, 320, 280, 890, 1100, 950, 640, 410, 185, 75],
+          outflow: [90, 95, 180, 250, 220, 580, 720, 650, 480, 330, 210, 120]
+        }
+      },
+      redhills: {
+        2025: {
+          inflow: [35, 42, 120, 280, 240, 780, 980, 840, 560, 360, 160, 65],
+          outflow: [75, 80, 150, 220, 190, 520, 650, 580, 420, 290, 185, 100]
+        }
+      },
+      cholavaram: {
+        2025: {
+          inflow: [28, 38, 110, 260, 210, 690, 870, 750, 490, 320, 140, 55],
+          outflow: [65, 70, 135, 200, 170, 470, 590, 520, 380, 260, 165, 85]
+        }
+      },
+      chembarambakkam: {
+        2025: {
+          inflow: [52, 58, 160, 340, 310, 940, 1150, 1020, 710, 460, 205, 85],
+          outflow: [100, 105, 200, 270, 240, 620, 770, 690, 520, 360, 230, 135]
+        }
+      }
+    };
+    
+    // Chart instance
+    let forecastChart = null;
+    
+    // Month labels
+    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Initialize chart
+    function initChart() {
+      const ctx = document.getElementById('forecastChart');
+      if (!ctx) return;
+      
+      forecastChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: monthLabels,
+          datasets: [
+            {
+              label: 'Inflow',
+              data: reservoirData.poondi[2025].inflow,
+              borderColor: '#0ea5e9',
+              backgroundColor: 'rgba(14, 165, 233, 0.1)',
+              borderWidth: 3,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 6,
+              pointHoverRadius: 8,
+              pointBackgroundColor: '#0ea5e9',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            },
+            {
+              label: 'Outflow',
+              data: reservoirData.poondi[2025].outflow,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              tension: 0.4,
+              fill: true,
+              pointRadius: 6,
+              pointHoverRadius: 8,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#fff',
+              pointBorderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: {
+                  size: 14,
+                  weight: '600',
+                  family: 'Inter'
+                },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleFont: {
+                size: 14,
+                weight: '600'
+              },
+              bodyFont: {
+                size: 13
+              },
+              cornerRadius: 8
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)',
+                lineWidth: 1
+              },
+              ticks: {
+                font: {
+                  size: 12,
+                  weight: '500'
+                },
+                color: '#64748b'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                font: {
+                  size: 12,
+                  weight: '500'
+                },
+                color: '#64748b'
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+    }
+    
+    // Update predictions
+    function updatePredictions() {
+      const reservoir = document.getElementById('reservoirSelect').value;
+      const year = document.getElementById('yearSelect').value;
+      const month = parseInt(document.getElementById('monthSelect').value);
+      
+      const data = reservoirData[reservoir]?.[year];
+      if (data) {
+        document.getElementById('inflowValue').textContent = data.inflow[month];
+        document.getElementById('outflowValue').textContent = data.outflow[month];
+        
+        // Update chart
+        if (forecastChart) {
+          forecastChart.data.datasets[0].data = data.inflow;
+          forecastChart.data.datasets[1].data = data.outflow;
+          forecastChart.update('none');
+        }
+      }
+    }
+    
+    // Event listeners
+    document.getElementById('reservoirSelect').addEventListener('change', updatePredictions);
+    document.getElementById('yearSelect').addEventListener('change', updatePredictions);
+    document.getElementById('monthSelect').addEventListener('change', updatePredictions);
+    
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+    
+    // Open full dashboard
+    function openFullDashboard() {
+      window.open("http://localhost:8504/", "_blank");   
+    }
+    //http://localhost:8504/
+    // Language toggle with full translation
+    const langBtn = document.getElementById('langBtn');
+    let isEnglish = true;
+    
+    const translations = {
+      en: {
+        pageTitle: "🌊 Reservoir-wise Inflow & Outflow Forecast",
+        chartTitle: "📈 Monthly Forecast",
+        selectReservoir: "Select Reservoir",
+        year: "Year",
+        month: "Month",
+        predictedInflow: "Predicted Inflow",
+        predictedOutflow: "Predicted Outflow",
+        viewFullDashboard: "View Full Dashboard",
+        months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+        reservoirs: {
+          poondi: "Poondi",
+          redhills: "Red Hills",
+          cholavaram: "Cholavaram",
+          chembarambakkam: "Chembarambakkam"
+        },
+        home: "Home",
+        about: "About",
+        waterMonitoring: "Water Monitoring",
+        leakDetection: "Leak Detection",
+        groundwater: "Groundwater",
+        dashboard: "Dashboard",
+        reservoir: "Reservoir",
+        login: "Login",
+        copyright: "© 2024 AquaFlow Chennai. All rights reserved."
+      },
+      ta: {
+        pageTitle: "🌊 நீர்த்தேக்க வாரியான உட்செலுத்தல் & வெளியேற்றம் முன்னறிவிப்பு",
+        chartTitle: "📈 மாதாந்திர முன்னறிவிப்பு",
+        selectReservoir: "நீர்த்தேக்கத்தைத் தேர்ந்தெடுக்கவும்",
+        year: "ஆண்டு",
+        month: "மாதம்",
+        predictedInflow: "முன்னறிவிக்கப்பட்ட உட்செலுத்தல்",
+        predictedOutflow: "முன்னறிவிக்கப்பட்ட வெளியேற்றம்",
+        viewFullDashboard: "முழு டாஷ்போர்டைக் காண்க",
+        months: ["ஜனவரி", "பிப்ரவரி", "மார்ச்", "ஏப்ரல்", "மே", "ஜூன்", "ஜூலை", "ஆகஸ்ட்", "செப்டம்பர்", "அக்டோபர்", "நவம்பர்", "டிசம்பர்"],
+        reservoirs: {
+          poondi: "பூண்டி",
+          redhills: "ரெட் ஹில்ஸ்",
+          cholavaram: "சோழவரம்",
+          chembarambakkam: "செம்பரம்பாக்கம்"
+        },
+        home: "முகப்பு",
+        about: "பற்றி",
+        waterMonitoring: "நீர் க��்காணிப்பு",
+        leakDetection: "கசிவு கண்டறிதல்",
+        groundwater: "நிலத்தடி நீர்",
+        dashboard: "டாஷ்போர்டு",
+        reservoir: "நீர்த்தேக்கம்",
+        login: "உள்நுழைய",
+        copyright: "© 2024 AquaFlow சென்னை. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை."
+      }
+    };
+    
+    function updateLanguage() {
+      const lang = isEnglish ? 'en' : 'ta';
+      const t = translations[lang];
+      
+      // Update page title
+      const pageTitle = document.getElementById('pageTitle');
+      if (pageTitle) pageTitle.textContent = t.pageTitle;
+      
+      // Update chart title
+      const chartTitle = document.getElementById('chartTitle');
+      if (chartTitle) chartTitle.textContent = t.chartTitle;
+      
+      // Update labels
+      const labels = document.querySelectorAll('label');
+      if (labels[0]) labels[0].textContent = t.selectReservoir;
+      if (labels[1]) labels[1].textContent = t.year;
+      if (labels[2]) labels[2].textContent = t.month;
+      
+      // Update prediction labels
+      const predictionCards = document.querySelectorAll('.bg-gradient-to-r p');
+      if (predictionCards[0]) predictionCards[0].textContent = t.predictedInflow;
+      if (predictionCards[2]) predictionCards[2].textContent = t.predictedOutflow;
+      
+      // Update button
+      const dashboardBtn = document.querySelector('button[onclick="openFullDashboard()"]');
+      if (dashboardBtn) dashboardBtn.textContent = t.viewFullDashboard;
+      
+      // Update reservoir options
+      const reservoirSelect = document.getElementById('reservoirSelect');
+      if (reservoirSelect) {
+        reservoirSelect.options[0].text = t.reservoirs.poondi;
+        reservoirSelect.options[1].text = t.reservoirs.redhills;
+        reservoirSelect.options[2].text = t.reservoirs.cholavaram;
+        reservoirSelect.options[3].text = t.reservoirs.chembarambakkam;
+      }
+      
+      // Update month options
+      const monthSelect = document.getElementById('monthSelect');
+      if (monthSelect) {
+        for (let i = 0; i < 12; i++) {
+          monthSelect.options[i].text = t.months[i];
+        }
+      }
+      
+      // Update navigation
+      const navLinks = document.querySelectorAll('.hidden.lg\\:flex .nav-link');
+      if (navLinks[0]) navLinks[0].textContent = t.home;
+      if (navLinks[1]) navLinks[1].textContent = t.about;
+      if (navLinks[2]) navLinks[2].textContent = t.waterMonitoring;
+      if (navLinks[3]) navLinks[3].textContent = t.leakDetection;
+      if (navLinks[4]) navLinks[4].textContent = t.groundwater;
+      if (navLinks[5]) navLinks[5].textContent = t.dashboard;
+      if (navLinks[6]) navLinks[6].textContent = t.reservoir;
+      
+      // Update mobile nav
+      const mobileNavLinks = document.querySelectorAll('#mobileMenu .nav-link');
+      if (mobileNavLinks[0]) mobileNavLinks[0].textContent = t.home;
+      if (mobileNavLinks[1]) mobileNavLinks[1].textContent = t.about;
+      if (mobileNavLinks[2]) mobileNavLinks[2].textContent = t.waterMonitoring;
+      if (mobileNavLinks[3]) mobileNavLinks[3].textContent = t.leakDetection;
+      if (mobileNavLinks[4]) mobileNavLinks[4].textContent = t.groundwater;
+      if (mobileNavLinks[5]) mobileNavLinks[5].textContent = t.dashboard;
+      if (mobileNavLinks[6]) mobileNavLinks[6].textContent = t.reservoir;
+      
+      // Update login buttons
+      const loginBtns = document.querySelectorAll('button');
+      loginBtns.forEach(btn => {
+        if (btn.textContent.trim() === 'Login' || btn.textContent.trim() === 'உள்நுழைய') {
+          btn.textContent = t.login;
+        }
+      });
+      
+      // Update copyright
+      const copyright = document.querySelector('footer p');
+      if (copyright) copyright.textContent = t.copyright;
+      
+      // Update language button text
+      const langBtnSpan = langBtn.querySelector('span');
+      if (langBtnSpan) langBtnSpan.textContent = isEnglish ? 'EN' : 'தமிழ்';
+    }
+    
+    if (langBtn) {
+      langBtn.addEventListener('click', () => {
+        isEnglish = !isEnglish;
+        updateLanguage();
+      });
+    }
+    
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      updatePredictions();
+    });
+    
+    // Config change handler
+    async function onConfigChange(cfg) {
+      config = { ...defaultConfig, ...cfg };
+      
+      const titleEl = document.getElementById('pageTitle');
+      const chartTitleEl = document.getElementById('chartTitle');
+      
+      if (titleEl) {
+        titleEl.textContent = config.page_title || defaultConfig.page_title;
+      }
+      
+      if (chartTitleEl) {
+        chartTitleEl.textContent = config.chart_title || defaultConfig.chart_title;
+      }
+    }
+    
+    // Map to capabilities
+    function mapToCapabilities(cfg) {
+      return {
+        recolorables: [
+          {
+            get: () => cfg.background_color || defaultConfig.background_color,
+            set: (value) => {
+              cfg.background_color = value;
+              window.elementSdk.setConfig({ background_color: value });
+            }
+          },
+          {
+            get: () => cfg.primary_color || defaultConfig.primary_color,
+            set: (value) => {
+              cfg.primary_color = value;
+              window.elementSdk.setConfig({ primary_color: value });
+            }
+          },
+          {
+            get: () => cfg.secondary_color || defaultConfig.secondary_color,
+            set: (value) => {
+              cfg.secondary_color = value;
+              window.elementSdk.setConfig({ secondary_color: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+    
+    // Map to edit panel values
+    function mapToEditPanelValues(cfg) {
+      return new Map([
+        ["page_title", cfg.page_title || defaultConfig.page_title],
+        ["chart_title", cfg.chart_title || defaultConfig.chart_title]
+      ]);
+    }
+    
+    // Initialize Element SDK
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c1ddbd1e0d27fb3',t:'MTc2OTA3MjQwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
